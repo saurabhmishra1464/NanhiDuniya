@@ -1,21 +1,17 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using NanhiDuniya.Service.Services;
-using NanhiDuniya.Data.Entities;
-using NanhiDuniya.LoggerService;
-using NanhiDuniya.UserManagement.APi.Middleware;
+using NanhiDuniya.Services.EmailApi.Configurations;
+using NanhiDuniya.Services.EmailApi.Services.Implementations;
+using NanhiDuniya.Services.EmailApi.Services.Interfaces;
 using Serilog;
-using Microsoft.AspNetCore.Identity;
-using NanhiDuniya.Service.Mapping;
-using Microsoft.Extensions.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuration = builder.Configuration;
+
 // Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -44,54 +40,31 @@ builder.Services.AddSwaggerGen(c =>
     }
     });
 });
-
-builder.Services.AddCors(options => {
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
+builder.Services.AddCors(options =>
+{
     options.AddPolicy("AllowAll",
         b => b.AllowAnyHeader()
             .AllowAnyOrigin()
             .AllowAnyMethod());
 });
 
-builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
-//Sql Server Setup
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<NanhiDuniyaDbContext>(options =>
-    options.UseSqlServer(connectionString));
 
-// Register AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-
-//initializing services.
-builder.Services.DataServiceCollection(builder.Configuration);
-
-//Identity setting
-builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
-    .AddEntityFrameworkStores<NanhiDuniyaDbContext>()
-    .AddDefaultTokenProviders();
-// Register the ILoggerManager service
-builder.Services.AddSingleton<ILoggerManager, LoggerManager>();
-builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection("NanhiDuniyaServices"));
 var app = builder.Build();
 
-var logger = app.Services.GetRequiredService<ILoggerManager>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
 app.UseSerilogRequestLogging();
-
-app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseHttpsRedirection();
-
 app.UseCors("AllowAll");
-
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
-

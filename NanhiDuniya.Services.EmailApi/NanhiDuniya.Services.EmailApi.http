@@ -1,0 +1,6 @@
+@NanhiDuniya.Services.EmailApi_HostAddress = http://localhost:5042
+
+GET {{NanhiDuniya.Services.EmailApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
