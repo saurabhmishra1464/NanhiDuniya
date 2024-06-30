@@ -49,28 +49,20 @@ namespace NanhiDuniya.Services.EmailApi.Services.Implementations
 
         public async Task<bool> SendEmailAsync(EmailRequest request)
         {
+            MimeMessage message = CreateEmailMessage(request);
 
-            try
+            using (var client = new SmtpClient())
             {
-                MimeMessage message = CreateEmailMessage(request);
-                //String result = await _smtpClient.SendAsync(message);
-                using (var client = new SmtpClient())
-                {
-                    await client.ConnectAsync(_settings.SmtpServer, _settings.SmtpPort, false);
-                    await client.AuthenticateAsync(_settings.Username, _settings.Password);
-                    await client.SendAsync(message);
-                    await client.DisconnectAsync(true);
-                    // Log successful email send
-                    _logger.LogInformation("Email sent successfully to {Recipient}", string.Join(", ", message.To));
-                    return true;
-                }
+                await client.ConnectAsync(_settings.SmtpServer, _settings.SmtpPort, false);
+                await client.AuthenticateAsync(_settings.Username, _settings.Password);
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to send email.", ex.Message);
-                return false;
-            }
+
+            _logger.LogInformation("Email sent successfully to {Recipient}", string.Join(", ", message.To));
+            return true;
         }
+
 
 
         private MimeMessage CreateEmailMessage(EmailRequest request)

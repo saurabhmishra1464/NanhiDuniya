@@ -9,6 +9,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace NanhiDuniya.Service.Services
 {
@@ -19,15 +20,16 @@ namespace NanhiDuniya.Service.Services
         private readonly string _defaultFromAddress = null!;
         private readonly NanhiDuniyaServicesSettings _nanhiDuniyaSettings;
         private readonly IHostEnvironment _env;
-
+        private readonly ILogger<EmailClientService> _logger;
         public EmailClientService(IServiceProvider serviceProvider, IHostEnvironment env,
-    IOptions<NanhiDuniyaServicesSettings> nanhiduniyaSettingsOpt)
+    IOptions<NanhiDuniyaServicesSettings> nanhiduniyaSettingsOpt,ILogger<EmailClientService> logger)
         {
             _httpClient = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient();
             _nanhiDuniyaSettings = nanhiduniyaSettingsOpt?.Value ?? throw new ArgumentNullException(nameof(nanhiduniyaSettingsOpt));
             _serviceUrl = _nanhiDuniyaSettings.Email.SendMailUrl;
             _defaultFromAddress = _nanhiDuniyaSettings.Email.DefaultFrom;
             _env = env ?? throw new ArgumentNullException(nameof(env));
+            _logger = logger;
         }
 
         private string LoadHtmlTemplate(string templatePath)
@@ -75,24 +77,21 @@ namespace NanhiDuniya.Service.Services
 
         public async Task<bool> SendEmailAsync(NanhiDuniyaEmailRequest request)
         {
-            try
+            var response = await _httpClient.SendAsync(CreateMessage(request));
+            Console.Write(response.ToString());
+            // Ensure success status code
+            if (response.IsSuccessStatusCode)
             {
-                var response = await _httpClient.SendAsync(CreateMessage(request));
-
-                response.EnsureSuccessStatusCode();
-                Console.WriteLine(response);
+                _logger.LogInformation("Email sent successfully. Response: {Response}", response);
                 return true;
             }
-            catch (HttpRequestException httpRequestException)
+            else
             {
-                // Handle HTTP request specific errors
+                _logger.LogWarning("Failed to send email. Response: {Response}", response);
+                return false;
             }
-            catch (Exception ex)
-            {
-                // Handle other error
-            }
-            return false;
         }
+
 
         private HttpRequestMessage CreateMessage(NanhiDuniyaEmailRequest request)
         {

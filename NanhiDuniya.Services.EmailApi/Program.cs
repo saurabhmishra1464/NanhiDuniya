@@ -1,5 +1,6 @@
 using Microsoft.OpenApi.Models;
 using NanhiDuniya.Services.EmailApi.Configurations;
+using NanhiDuniya.Services.EmailApi.Middleware;
 using NanhiDuniya.Services.EmailApi.Services.Implementations;
 using NanhiDuniya.Services.EmailApi.Services.Interfaces;
 using Serilog;
@@ -52,8 +53,9 @@ builder.Services.AddCors(options =>
 });
 
 
-var app = builder.Build();
 
+var app = builder.Build();
+app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
