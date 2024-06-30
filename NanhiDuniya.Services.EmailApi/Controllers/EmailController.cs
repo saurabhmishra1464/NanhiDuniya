@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using NanhiDuniya.Services.EmailApi.Extentions;
 using NanhiDuniya.Services.EmailApi.Models;
 using NanhiDuniya.Services.EmailApi.Services.Interfaces;
 
@@ -21,28 +22,18 @@ namespace NanhiDuniya.Services.EmailApi.Controllers
 
         public async Task<IActionResult> SendEmail(EmailRequest emailRequest)
         {
+            throw new NotImplementedException();
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState); // Return 400 Bad Request if model validation fails
-            }
-            try
-            {
-                bool result = await _emailService.SendEmailAsync(emailRequest);
-                if (result)
-                {
-                    return Ok("Email sent successfully");
-                }
-                else
-                {
-                    return StatusCode(500, "Failed to send email"); // or return specific error message
-                }
-            }
-            catch(Exception ex)
-            {
-
-                return StatusCode(500, $"Internal server error: {ex.Message}");
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
             }
 
+            bool result = await _emailService.SendEmailAsync(emailRequest);
+            if (result)
+            {
+                return Ok(new ApiResponse(StatusCodes.Status200OK, "Email sent successfully."));
+            }
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "Failed to send email."));
 
         }
 
