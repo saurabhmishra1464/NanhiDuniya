@@ -67,30 +67,30 @@ namespace NanhiDuniya.Services.EmailApi.Services.Implementations
 
         private MimeMessage CreateEmailMessage(EmailRequest request)
         {
+            if (request == null)
+                throw new ArgumentNullException(nameof(request), "Email request cannot be null.");
+
+            if (request.ToList == null || !request.ToList.Any())
+                throw new ArgumentException("Recipient list cannot be empty.", nameof(request.ToList));
+
             string imagePath = Path.Combine(_env.ContentRootPath, "Assets", "Logo.png");
+            if (!File.Exists(imagePath))
+                throw new FileNotFoundException($"The file '{imagePath}' does not exist.");
             var emailMessage = new MimeMessage();
-            try
-            {
-                emailMessage.From.Add(new MailboxAddress("NanhiDuniya", _settings.DefaultFrom));
-                //var mailboxaddress = message.ToList.Select(address => new MailboxAddress(address)).ToList();
-                var mailboxAddresses = request.ToList.Select(address => new MailboxAddress(string.Empty, address)).ToList();
-                emailMessage.To.AddRange(mailboxAddresses);
-                emailMessage.Subject = request.Subject;
-                var bodyBuilder = new BodyBuilder { HtmlBody = request.HtmlBody };
-                var image = bodyBuilder.LinkedResources.Add(imagePath);
-                image.ContentId = "logo_cid";
-                image.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
-                image.ContentType.MediaType = "image";
-                image.ContentType.MediaSubtype = "png";
 
-                emailMessage.Body = bodyBuilder.ToMessageBody();
+            emailMessage.From.Add(new MailboxAddress("NanhiDuniya", _settings.DefaultFrom));
+            //var mailboxaddress = message.ToList.Select(address => new MailboxAddress(address)).ToList();
+            var mailboxAddresses = request.ToList.Select(address => new MailboxAddress(string.Empty, address)).ToList();
+            emailMessage.To.AddRange(mailboxAddresses);
+            emailMessage.Subject = request.Subject;
+            var bodyBuilder = new BodyBuilder { HtmlBody = request.HtmlBody };
+            var image = bodyBuilder.LinkedResources.Add(imagePath);
+            image.ContentId = "logo_cid";
+            image.ContentDisposition = new ContentDisposition(ContentDisposition.Inline);
+            image.ContentType.MediaType = "image";
+            image.ContentType.MediaSubtype = "png";
 
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to Create Email Message.", ex.Message);
-            }
-
+            emailMessage.Body = bodyBuilder.ToMessageBody();
             return emailMessage;
         }
     }

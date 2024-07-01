@@ -22,7 +22,7 @@ namespace NanhiDuniya.Services.EmailApi.Controllers
 
         public async Task<IActionResult> SendEmail(EmailRequest emailRequest)
         {
-            throw new NotImplementedException();
+          
             if (!ModelState.IsValid)
             {
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
