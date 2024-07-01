@@ -1,9 +1,12 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 using NanhiDuniya.Services.EmailApi.Configurations;
 using NanhiDuniya.Services.EmailApi.Middleware;
+using NanhiDuniya.Services.EmailApi.Resources;
 using NanhiDuniya.Services.EmailApi.Services.Implementations;
 using NanhiDuniya.Services.EmailApi.Services.Interfaces;
 using Serilog;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +43,26 @@ builder.Services.AddSwaggerGen(c =>
         new string[] { }
     }
     });
+});
+builder.Services.Configure<ApiBehaviorOptions>(o =>
+{
+    o.InvalidModelStateResponseFactory = actionContext =>
+    {
+        var res = new ResponseDTO
+        {
+            Message = "One or more validation errors occurred.",
+            StatusCode = HttpStatusCode.BadRequest,
+            // Add additional properties or data from ModelState if needed
+            Errors = actionContext.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToArray()
+        };
+        return new ObjectResult(res)
+        {
+            StatusCode = (int)HttpStatusCode.BadRequest,
+        };
+    };
 });
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));

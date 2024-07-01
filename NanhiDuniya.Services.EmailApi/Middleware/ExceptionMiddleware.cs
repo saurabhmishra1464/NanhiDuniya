@@ -54,6 +54,11 @@ namespace NanhiDuniya.Services.EmailApi.Middleware
                     statusCode = HttpStatusCode.NotFound;
                     errorMessage = "Resource not found.";
                     break;
+                case FileNotFoundException _:
+                    statusCode = HttpStatusCode.NotFound;
+                    errorMessage = "File is Not Found";
+                    break;
+                
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     break;
