@@ -2,12 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NanhiDuniya.Service.Services;
 using NanhiDuniya.Data.Entities;
-using NanhiDuniya.LoggerService;
 using NanhiDuniya.UserManagement.APi.Middleware;
 using Serilog;
 using Microsoft.AspNetCore.Identity;
 using NanhiDuniya.Service.Mapping;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using NanhiDuniya.Core.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -20,7 +23,7 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
     {
-        Title = "NanhiDuniya User Management API",
+        Title = "My API",
         Version = "v1"
     });
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -45,21 +48,10 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddCors(options => {
-    options.AddPolicy("AllowAll",
-        b => b.AllowAnyHeader()
-            .AllowAnyOrigin()
-            .AllowAnyMethod());
-});
+//Sql Server Setup
+builder.Services.AddDbContext<NanhiDuniyaDbContext>(options =>options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
-//Sql Server Setup
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
-builder.Services.AddDbContext<NanhiDuniyaDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-// Register AutoMapper
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
 
 //initializing services.
 builder.Services.DataServiceCollection(builder.Configuration);
@@ -68,12 +60,45 @@ builder.Services.DataServiceCollection(builder.Configuration);
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<NanhiDuniyaDbContext>()
     .AddDefaultTokenProviders();
-// Register the ILoggerManager service
-builder.Services.AddSingleton<ILoggerManager, LoggerManager>();
-builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection("NanhiDuniyaServices"));
-var app = builder.Build();
 
-var logger = app.Services.GetRequiredService<ILoggerManager>();
+// Adding Authentication
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+
+// Adding Jwt Bearer
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false;
+    options.TokenValidationParameters = new TokenValidationParameters()
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidAudience = configuration["JWT:ValidAudience"],
+        ValidIssuer = configuration["JWT:ValidIssuer"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:Secret"]!))
+    };
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        b => b.AllowAnyHeader()
+            .AllowAnyOrigin()
+            .AllowAnyMethod());
+});
+builder.Services.Configure<JWTService>(configuration.GetSection("JWT"));
+builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection("NanhiDuniyaServices"));
+
+
+
+var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -87,7 +112,9 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAll");
+app.UseCors("AllowAllOrigins");
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

@@ -14,6 +14,8 @@ namespace NanhiDuniya.Service.Mapping
         public MappingProfile()
         {
             CreateMap<RegistrationRequestDto, RegisterModel>();
+            CreateMap<LoginRequestDto,LoginModel>();
+            CreateMap<LoginResponse, LoginResponseResource>();
             // Add other mappings here
         }
     }
