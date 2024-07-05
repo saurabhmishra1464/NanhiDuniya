@@ -32,21 +32,7 @@ namespace NanhiDuniya.Service.Services
             _logger = logger;
         }
 
-        private string LoadHtmlTemplate(string templatePath)
-        {
-            ValidateFileExists(templatePath);
-            string htmlContent = File.ReadAllText(templatePath);
-            htmlContent = htmlContent.Replace("{{SchoolName}}", "Nanhi Duniya");
-            return htmlContent;
-        }
-
-        private void ValidateFileExists(string filePath)
-        {
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException($"File not found: {filePath}", filePath);
-        }
-
-        public async Task<bool> SendEmailAsync(string subject, string? htmlBody = null, string? plainTextBody = null, string? templateName = null, string? to = null, List<string>? toList = null)
+        public async Task<bool> SendEmailAsync(string subject,string firstname,string resetLink, string? htmlBody = null, string? plainTextBody = null, string? templateName = null, string? to = null, List<string>? toList = null)
         {
             if (toList == null || toList.Count == 0)
             {
@@ -59,7 +45,7 @@ namespace NanhiDuniya.Service.Services
             }
             var templatePath = Path.Combine(_env.ContentRootPath, "Templates", $"{templateName}.html");
 
-            htmlBody = LoadHtmlTemplate(templatePath);
+            htmlBody = LoadHtmlTemplate(templatePath,resetLink,firstname,to);
 
             var request = new NanhiDuniyaEmailRequest()
             {
@@ -108,6 +94,23 @@ namespace NanhiDuniya.Service.Services
                 Content = httpContent
             };
             return message;
+        }
+
+        private string LoadHtmlTemplate(string templatePath, string resetLink, string firstName,string to)
+        {
+            ValidateFileExists(templatePath);
+            string htmlContent = File.ReadAllText(templatePath);
+            htmlContent = htmlContent.Replace("{{SchoolName}}", "Nanhi Duniya");
+            htmlContent = htmlContent.Replace("{{FirstName}}", firstName);
+            htmlContent = htmlContent.Replace("{{resetLink}}", resetLink);
+            htmlContent = htmlContent.Replace("{{Email}}", to);
+            return htmlContent;
+        }
+
+        private void ValidateFileExists(string filePath)
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"File not found: {filePath}", filePath);
         }
     }
 }

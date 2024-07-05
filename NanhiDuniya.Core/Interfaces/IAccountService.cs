@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using NanhiDuniya.Core.Models;
+using NanhiDuniya.Core.Resources.AccountDtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,5 +13,6 @@ namespace NanhiDuniya.Core.Interfaces
     {
         Task<LoginResponse> Login(LoginModel model);
         Task<ResultResponse> Register(RegisterModel model);
+        Task<ResultResponse> ResetPassword(ResetPasswordDto resetPasswordDto);
     }
 }
