@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Constants;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
+using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Data.Entities;
 using PhoneNumbers;
 using System;
@@ -14,6 +15,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
@@ -125,7 +127,11 @@ namespace NanhiDuniya.Service.Services
                 {
                     await _userManager.AddToRoleAsync(user, UserRoles.Parent);
                 }
-                _ = _emailClient.SendEmailAsync("Registration Successful", null, null, "VerifyEmail", user.Email);
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                // Customize the email template and send reset link
+                var resetLink = $"https://localhost:7014/reset-password?token={WebUtility.UrlEncode(token)}&email={WebUtility.UrlEncode(user.Email)}";
+                _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, resetLink, null, null, "RegistrationSuccesful", user.Email);
 
 
                 response.IsSuccess = true;
@@ -159,6 +165,26 @@ namespace NanhiDuniya.Service.Services
                 PasswordHash = model.Password,
                 PhoneNumber = model.PhoneNumber,
             };
+        }
+
+        public async Task<ResultResponse> ResetPassword(ResetPasswordDto model)
+        {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return new ResultResponse { Message = "User not found." };
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return new ResultResponse { IsSuccess = true, Message = "Password reset successfully." };
+            }
+            else
+            {
+                return new ResultResponse { Message = "Failed to reset password." };
+            }
         }
         private static ResultResponse UserAlreadyExistsResponse()
         {

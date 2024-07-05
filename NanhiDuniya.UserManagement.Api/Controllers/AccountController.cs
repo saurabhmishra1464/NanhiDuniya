@@ -39,7 +39,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             {
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
             }
-          
+
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
 
             if (result.IsSuccess)
@@ -78,52 +78,45 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         }
         #endregion
 
-        //#region Authentication Token and handshake endpoints 
-
-        //[HttpPost("Login")]
-        //public async Task<IActionResult> Login(LoginResource model)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
-
-        //    var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-
-        //    if (result.IsSuccess)
-        //    {
-        //        return Ok(_mapper.Map<LoginResponseResource>(result));
-        //    }
-
-        //    _logger.LogWarning($"Login failed for {model.Email}");
-        //    return BadRequest(new LoginResponseResource { IsSuccess = false, Message = result.Message });
-        //}
-
-        //#endregion
-
-
         #region Authentication Token and handshake endpoints 
-        /// <summary>
-        /// Customer Login
-        /// </summary>
-        /// <param name="model"></param>
-        /// <returns></returns>
-        /// <response code="200">Success</response>
-        /// <response code="400">Bad Request</response>
         [HttpPost("Login")]
         public async Task<IActionResult> Login(LoginRequestDto model)
         {
-                if (ModelState.IsValid)
-                {
-                    var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-                    if (!result.IsSuccess)
-                        return BadRequest(_mapper.Map<LoginResponseResource>(result));
-                    return Ok(_mapper.Map<LoginResponseResource>(result));
-                }
-
+            if (!ModelState.IsValid)
+            {
                 return BadRequest(new LoginResponseResource() { IsSuccess = false, Message = StaticData.GenericExceptionMessage });
-            
+            }
+            var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
+            if (!result.IsSuccess)
+            {
+                _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
+                return BadRequest(_mapper.Map<LoginResponseResource>(result));
+            }
+            _logger.LogInformation("User {Username} logged in successfully.", model.Email);
+            return Ok(_mapper.Map<LoginResponseResource>(result));
         }
+
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
+            }
+
+            var result = await _accountService.ResetPassword(model);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Password reset successfully for user: {Email}", model.Email);
+                return Ok(new ApiResponse(StatusCodes.Status200OK, result.Message));
+            }
+
+            _logger.LogError("Password reset failed for user {Email}: {ErrorMessage}", model.Email, result.Message);
+            return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
+        }
+
+
         #endregion
     }
 
