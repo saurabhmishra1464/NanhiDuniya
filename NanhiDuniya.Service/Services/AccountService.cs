@@ -30,12 +30,16 @@ namespace NanhiDuniya.Service.Services
         private readonly IEmailClientService _emailClient;
         private readonly IMapper _mapper;
         private readonly JWTService _jwtService;
+        private readonly IConfiguration _configuration;
+        private readonly IUserService _userService;
         public AccountService(
             UserManager<ApplicationUser> userManager,
             IMapper mapper,
             IOptions<JWTService> options,
             RoleManager<IdentityRole> roleManager,
-            IEmailClientService emailClient
+            IEmailClientService emailClient,
+            IConfiguration configuration,
+            IUserService userService
 
 
             )
@@ -45,6 +49,8 @@ namespace NanhiDuniya.Service.Services
             _jwtService = options.Value;
             _emailClient = emailClient;
             _mapper = mapper;
+            _configuration = configuration;
+            _userService = userService;
         }
         #endregion
 
@@ -130,7 +136,8 @@ namespace NanhiDuniya.Service.Services
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
                 // Customize the email template and send reset link
-                var resetLink = $"https://localhost:7014/reset-password?token={WebUtility.UrlEncode(token)}&email={WebUtility.UrlEncode(user.Email)}";
+
+                var resetLink = _userService.GeneratePasswordResetLink(new UserDto {Email = user.Email }, token);
                 _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, resetLink, null, null, "RegistrationSuccesful", user.Email);
 
 
