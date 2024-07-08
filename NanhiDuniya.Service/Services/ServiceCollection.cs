@@ -32,6 +32,7 @@ namespace NanhiDuniya.Service.Services
             //services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.AddScoped<IEmailClientService, EmailClientService>();
             services.AddSingleton<IPasswordService, PasswordService>();
+            services.AddScoped<IUserService, UserService>();
             services.Configure<ApiBehaviorOptions>(o =>
             {
                 o.InvalidModelStateResponseFactory = actionContext =>

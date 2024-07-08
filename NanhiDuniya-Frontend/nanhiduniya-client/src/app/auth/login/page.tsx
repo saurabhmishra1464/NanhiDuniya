@@ -69,9 +69,6 @@ const LoginPage = () => {
             </a>
           </div>
         </form>
-        <div className="mt-4 text-center">
-          <p className="text-gray-600">Not a provider yet? <a href="/register" className="text-blue-500 hover:text-blue-800">Partner with us</a></p>
-        </div>
       </div>
     </div>
   );
