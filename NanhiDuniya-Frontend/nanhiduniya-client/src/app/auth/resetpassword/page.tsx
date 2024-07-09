@@ -2,111 +2,108 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { toast, ToastContainer } from '../../../components/Shared/ToastMessage/ToastContainer';
+import UserService from '@/services/UserManagement/UserService';
+import ResetPassword from '@/model/User';
 
-export default function ResetPassword() {
+const ResetPasswordPage = () => {
   const searchParams = useSearchParams();
   const token = searchParams?.get('token') || '';
   const email = searchParams?.get('email') || '';
   const router = useRouter();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
+  // const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (!token || !email) {
-      setError('Invalid password reset link.');
+      toast.error('Invalid password reset link.');
     }
   }, [token, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
+    debugger
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setError('Passwords do not match.');
+      toast.error('Passwords do not match.');
       return;
     }
-try {
-    const response = await fetch('https://your-backend-url/api/reset-password', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ token, email, newPassword })
-    });
+    const resetPasswordData: ResetPassword = { email, token, newPassword };
+    try {
+      const response = await UserService.resetPassword(resetPasswordData);
 
-    if (response.ok) {
-      setSuccess('Password reset successful.');
-      setError('');
-    } else {
-      const data = await response.json();
-      setError(data.error || 'Error resetting password.');
-      setSuccess('');
+      if (response.status) {
+        debugger
+        toast.success('Password reset successful.');
+      } else {
+        debugger
+        const data = await response.json();
+        toast.error(data.error || 'Error resetting password.');
+      }
+    } catch (error) {
+      toast.error('An unexpected error occurred.');
     }
-}catch(error){
-    setError('An unexpected error occurred.');
-    setSuccess('');
-}
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-md rounded-lg">
         <h2 className="text-2xl font-bold text-center">Reset Password</h2>
-
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4 relative">
+            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
+            <input
+              type={showPassword ? 'text' : 'password'} // Toggle input type
+              id="newPassword"
+              name="newPassword"
+              placeholder="Enter new password"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
+            </button>
+          </div>
+          <div className="mb-6 relative">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <input
+              type={showPassword ? 'text' : 'password'} // Toggle input type
+              id="confirmPassword"
+              name="confirmPassword"
+              placeholder="Confirm password"
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+            />
+            <button
+              type="button"
+              onClick={togglePasswordVisibility}
+              className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
+            >
+              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
+            </button>
+          </div>
+          <button type="submit" className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
+            Reset Password
+          </button>
+        </form>
+        <ToastContainer />
       </div>
     </div>
   );
 }
 
-
-
-// return (
-//   <div className="flex items-center justify-center min-h-screen bg-gray-100">
-//     <div className="w-full max-w-md p-8 space-y-6 bg-white shadow-md rounded-lg">
-//       <h2 className="text-2xl font-bold text-center">Reset Password</h2>
-//       {error && <p className="text-red-500">{error}</p>}
-//       {success && <p className="text-green-500">{success}</p>}
-//       <form className="space-y-6" onSubmit={handleSubmit}>
-//         <div>
-//           <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-//             New Password
-//           </label>
-//           <input
-//             id="newPassword"
-//             name="newPassword"
-//             type="password"
-//             value={newPassword}
-//             onChange={(e) => setNewPassword(e.target.value)}
-//             required
-//             className="w-full p-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-//           />
-//         </div>
-//         <div>
-//           <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-//             Confirm Password
-//           </label>
-//           <input
-//             id="confirmPassword"
-//             name="confirmPassword"
-//             type="password"
-//             value={confirmPassword}
-//             onChange={(e) => setConfirmPassword(e.target.value)}
-//             required
-//             className="w-full p-2 mt-1 border rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-//           />
-//         </div>
-//         <button
-//           type="submit"
-//           className="w-full px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
-//         >
-//           Reset Password
-//         </button>
-//       </form>
-//       <p className="text-sm text-center text-gray-600">
-//         {/* <Link href="/auth/login">
-//           <a className="text-blue-500 hover:text-blue-700">Back to login</a>
-//         </Link> */}
-//       </p>
-//     </div>
-//   </div>
-// );
+export default ResetPasswordPage
