@@ -5,7 +5,7 @@ const ToastContainer: React.FC = () => {
     return (
       <BaseToastContainer
         position="bottom-right"
-        autoClose={3000} // Close after 3 seconds
+        autoClose={6000} // Close after 3 seconds
         hideProgressBar
         newestOnTop={false}
         closeOnClick

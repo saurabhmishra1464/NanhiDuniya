@@ -4,9 +4,7 @@ import { ApiResponse } from '../Responses/ApiResponse';
 import { AxiosResponse } from 'axios';
 
 const resetPassword = async (resetPasswordData: ResetPassword) =>{
-    debugger
     try{
-        debugger
         const response  = await axiosInstanceUserManagement.post('/api/Account/ResetPassword', resetPasswordData);
         return response.data;
     }catch{
