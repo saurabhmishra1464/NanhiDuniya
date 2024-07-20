@@ -103,7 +103,11 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             {
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
             }
-
+            var tokenValidationResult = await _accountService.ValidateResetToken(model.Token, model.Email);
+            if (!tokenValidationResult.IsSuccess)
+            {
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, tokenValidationResult.Message));
+            }
             var result = await _accountService.ResetPassword(model);
 
             if (result.IsSuccess)
