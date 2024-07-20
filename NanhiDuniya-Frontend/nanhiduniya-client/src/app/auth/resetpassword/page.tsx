@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { toast, ToastContainer } from '../../../components/Shared/ToastMessage/ToastContainer';
+// import { toast, ToastContainer } from 'react-toastify';
 import UserService from '@/services/UserManagement/UserService';
 import ResetPassword from '@/model/User';
 import { FieldValues, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordFormValidation } from '@/lib/validation';
+import axios from 'axios';
 
 const ResetPasswordPage = () => {
   const searchParams = useSearchParams();
@@ -34,25 +36,31 @@ const ResetPasswordPage = () => {
   }, [token, email]);
 
   const onSubmit = async (data: FieldValues) => {
+    
     if (data.newPassword !== data.confirmPassword) {
       toast.error('Passwords do not match.');
       return;
     }
     const resetPasswordData: ResetPassword = { email, token, newPassword: data.newPassword };
+    
     try {
       const response = await UserService.resetPassword(resetPasswordData);
-      if (response.statusCode===200) {
+      if (response?.statusCode === 200) {
+        
         toast.success('Password reset successful.');
         reset();
-        setTimeout(() => {
-          router.push('/auth/login');
-      }, 3000);
       } else {
-        const data = await response.json();
-        toast.error(data.error || 'Error resetting password.');
+        
+        toast.error(response?.message || 'Error resetting password.');
       }
     } catch (error) {
-      toast.error('An unexpected error occurred.');
+      
+      if(axios.isAxiosError(error)&& error.response){
+        toast.error(error.response.data.message);
+      }
+      else{
+        toast.error('Token is Expired.');
+      }
     }
   };
 

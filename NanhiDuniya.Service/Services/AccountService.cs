@@ -193,6 +193,24 @@ namespace NanhiDuniya.Service.Services
                 return new ResultResponse { Message = "Failed to reset password." };
             }
         }
+
+        public async Task<ResultResponse> ValidateResetToken(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ResultResponse { Message = "User Not Found." }; // User not found
+            }
+
+            var result = await _userManager.VerifyUserTokenAsync(user,
+                TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
+            if (!result)
+            {
+                return new ResultResponse { IsSuccess = true, Message = "Token Expired" };
+            }
+
+            return new ResultResponse { IsSuccess = true };
+        }
         private static ResultResponse UserAlreadyExistsResponse()
         {
             return new ResultResponse { Message = "User already exists!" };
