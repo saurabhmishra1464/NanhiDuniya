@@ -2,7 +2,7 @@
 import axios, { AxiosError } from 'axios';
 
 const axiosInstanceUserManagement = axios.create({
-  baseURL: 'https://localhost:7014',
+  baseURL: 'https://localhost:7777',
 //   timeout: 5000, // Timeout after 5 seconds
   headers: {
     'Content-Type': 'application/json',

@@ -120,7 +120,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
         }
 
-
         #endregion
     }
 
