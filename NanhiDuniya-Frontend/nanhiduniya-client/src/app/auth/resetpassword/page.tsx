@@ -7,9 +7,8 @@ import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
 import { toast, ToastContainer } from '../../../components/Shared/ToastMessage/ToastContainer';
 // import { toast, ToastContainer } from 'react-toastify';
 import UserService from '@/services/UserManagement/UserService';
-import ResetPassword from '@/model/User';
+import { ResetPassword } from '@/model/User';
 import { FieldValues, useForm } from 'react-hook-form';
-import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordFormValidation } from '@/lib/validation';
 import axios from 'axios';
@@ -19,15 +18,16 @@ const ResetPasswordPage = () => {
   const token = searchParams?.get('token') || '';
   const email = searchParams?.get('email') || '';
   const router = useRouter();
-  // const [newPassword, setNewPassword] = useState('');
-  // const [confirmPassword, setConfirmPassword] = useState('');
-  // const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [ShowNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset, } = useForm({
+  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm({
     resolver: zodResolver(ResetPasswordFormValidation),
   });
+
+  const newPassword = watch('newPassword');
+  const confirmPassword = watch('confirmPassword');
 
   useEffect(() => {
     if (!token || !email) {
@@ -36,37 +36,43 @@ const ResetPasswordPage = () => {
   }, [token, email]);
 
   const onSubmit = async (data: FieldValues) => {
-    
+
     if (data.newPassword !== data.confirmPassword) {
       toast.error('Passwords do not match.');
       return;
     }
     const resetPasswordData: ResetPassword = { email, token, newPassword: data.newPassword };
-    
+
     try {
       const response = await UserService.resetPassword(resetPasswordData);
       if (response?.statusCode === 200) {
-        
+
         toast.success('Password reset successful.');
         reset();
       } else {
-        
+
         toast.error(response?.message || 'Error resetting password.');
       }
     } catch (error) {
-      
-      if(axios.isAxiosError(error)&& error.response){
+
+      if (axios.isAxiosError(error) && error.response) {
         toast.error(error.response.data.message);
       }
-      else{
-        toast.error('Token is Expired.');
+      else {
+        toast.error('An unexpected error occurred');
       }
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+  const togglePasswordVisibility = (field: 'newPassword' | 'confirmPassword') => {
+    if (field === 'newPassword') {
+      setShowNewPassword(prev => !prev)
+    } else if (field === 'confirmPassword') {
+      setShowConfirmPassword(prev => !prev);
+    }
   };
+
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
@@ -76,7 +82,7 @@ const ResetPasswordPage = () => {
           <div className="mb-4 relative">
             <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
             <input
-              type={showPassword ? 'text' : 'password'} // Toggle input type
+              type={ShowNewPassword ? 'text' : 'password'} // Toggle input type
               {...register("newPassword")}
               id="newPassword"
               name="newPassword"
@@ -86,18 +92,21 @@ const ResetPasswordPage = () => {
             {
               errors?.newPassword && (<span className="text-red-500 text-sm mt-1">{`${errors.newPassword.message}`}</span>)
             }
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
-            </button>
+            {newPassword && (
+              <button
+                type="button"
+                onClick={() => { togglePasswordVisibility('newPassword') }}
+                className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
+              >
+                <FontAwesomeIcon icon={ShowNewPassword ? faEyeSlash : faEye} size="sm" />
+              </button>
+            )}
+
           </div>
           <div className="mb-6 relative">
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm Password</label>
             <input
-              type={showPassword ? 'text' : 'password'} // Toggle input type
+              type={showConfirmPassword ? 'text' : 'password'} // Toggle input type
               {...register("confirmPassword")}
               id="confirmPassword"
               name="confirmPassword"
@@ -107,13 +116,15 @@ const ResetPasswordPage = () => {
             {
               errors?.confirmPassword && (<span className='text-red-500 text-sm mt-1'>{`${errors.confirmPassword.message}`}</span>)
             }
-            <button
-              type="button"
-              onClick={togglePasswordVisibility}
-              className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
-            >
-              <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
-            </button>
+            {confirmPassword && (
+              <button
+                type="button"
+                onClick={() => { togglePasswordVisibility('confirmPassword') }}
+                className="absolute right-2 top-8 text-gray-600 hover:text-gray-900 focus:outline-none"
+              >
+                <FontAwesomeIcon icon={showConfirmPassword ? faEyeSlash : faEye} size="sm" />
+              </button>
+            )}
           </div>
           <button type="submit" className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:bg-indigo-700">
             Reset Password
