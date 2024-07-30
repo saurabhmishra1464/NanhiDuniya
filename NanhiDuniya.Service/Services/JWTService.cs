@@ -8,8 +8,10 @@ namespace NanhiDuniya.Service.Services
 {
     public class JWTService
     {
-        public string? Secret { get; set; }
-        public string? ValidAudience { get; set; }
-        public string? ValidIssuer { get; set; }
+        public string? Issuer { get; set; }
+        public string? Audience { get; set; }
+        public string? Key { get; set; }
+        public int AccessTokenExpiryMinutes { get; set; }
+        public int RefreshTokenExpiryMinutes { get; set; }
     }
 }
