@@ -29,6 +29,7 @@ namespace NanhiDuniya.Service.Services
             services.Configure<NanhiDuniyaServicesSettings>(Configuration.GetSection("NanhiDuniyaServices"));
             services.AddHttpClient<EmailClientService>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<ITokenService, TokenService>();
             //services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.AddScoped<IEmailClientService, EmailClientService>();
             services.AddSingleton<IPasswordService, PasswordService>();

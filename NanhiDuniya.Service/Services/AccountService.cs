@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Constants;
@@ -17,6 +20,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,6 +29,7 @@ namespace NanhiDuniya.Service.Services
     public class AccountService : IAccountService
     {
         #region Global declarations 
+        private readonly NanhiDuniyaDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IEmailClientService _emailClient;
@@ -32,18 +37,24 @@ namespace NanhiDuniya.Service.Services
         private readonly JWTService _jwtService;
         private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
-        public AccountService(
+        private readonly ITokenService _tokenService;
+        private readonly ILogger<AccountService> _logger;
+
+        //private const string _loginProvider = "NanhiDuniyaUserManagementAPI";
+        //private const string _refreshToken = "RefreshToken";
+        public AccountService(NanhiDuniyaDbContext context,
             UserManager<ApplicationUser> userManager,
             IMapper mapper,
             IOptions<JWTService> options,
             RoleManager<IdentityRole> roleManager,
             IEmailClientService emailClient,
             IConfiguration configuration,
-            IUserService userService
-
-
+            IUserService userService,
+            ILogger<AccountService> logger,
+            ITokenService tokenService
             )
         {
+            _dbContext = context;
             _userManager = userManager;
             _roleManager = roleManager;
             _jwtService = options.Value;
@@ -51,31 +62,60 @@ namespace NanhiDuniya.Service.Services
             _mapper = mapper;
             _configuration = configuration;
             _userService = userService;
+            _tokenService = tokenService;
+            this._logger = logger;
         }
         #endregion
 
         #region Authentication Token/Login
-        public async Task<LoginResponse> Login(LoginModel model)
+        public async Task<LoginResponse> Login(LoginModel loginDto)
         {
-            // Attempt to find a user by their email address
-            var user = await FindUserByEmail(model.Email);
-            // Check if a user with the given email exists
-            if (user != null)
+           var _user = await _userManager.FindByEmailAsync(loginDto.Email);
+            bool isValidUser = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
+
+            if (_user == null || isValidUser == false)
             {
-                // Validate the provided password against the user's stored password hash
-                if (await ValidatePassword(user, model.Password))
-                {
-                    // Generate authentication token and build login response
-                    return await BuildLoginResponse(user);
-                }
-                else
-                {
-                    // Return a response indicating that the provided password is incorrect
-                    return IncorrectPasswordResponse();
-                }
+                _logger.LogWarning($"User with email {loginDto.Email} was not found");
+                return null;
             }
-            return new LoginResponse();
+
+            var roles = await _userManager.GetRolesAsync(_user);
+            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
+            var userClaims = await _userManager.GetClaimsAsync(_user);
+
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, _user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, _user.Email),
+                new Claim("uid", _user.Id),
+            }
+            .Union(userClaims).Union(roleClaims);
+            //var emailConfirmationStatus = await _userManager.IsEmailConfirmedAsync(_user);
+            var token = await _tokenService.GenerateJWT(claims);
+            var refreshToken = await _tokenService.GenerateRefreshToken(_user.Id);
+
+            var loginResponse= new LoginResponse
+            {
+                Token = token,
+                UserId = _user.Id,
+                RefreshToken = refreshToken,
+                //IsEmailConfirmed = true
+            };
+            var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
+            var users = await _dbContext.UserRefreshTokens.FirstOrDefaultAsync(u => u.UserId == _user.Id);
+            if (users != null)
+            {
+                _dbContext.UserRefreshTokens.Attach(users);
+                _dbContext.UserRefreshTokens.Remove(users);
+                await _dbContext.SaveChangesAsync();
+            }
+            await _dbContext.UserRefreshTokens.AddAsync(newRefreshToken);
+            await _dbContext.SaveChangesAsync();
+            return loginResponse;
         }
+
+
         #endregion
 
         #region User Registration methods
@@ -90,7 +130,7 @@ namespace NanhiDuniya.Service.Services
             // If a user with the same email exists, return a response indicating user already exists.
             if (userExists != null)
             {
-                return UserAlreadyExistsResponse();
+                return new ResultResponse { Message = "User already exists!" };
             }
 
             // Build a user entity from the registration model.
@@ -137,7 +177,7 @@ namespace NanhiDuniya.Service.Services
 
                 // Customize the email template and send reset link
 
-                var resetLink = _userService.GeneratePasswordResetLink(new UserDto {Email = user.Email }, token);
+                var resetLink = _userService.GeneratePasswordResetLink(new UserDto { Email = user.Email }, token);
                 _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, resetLink, null, null, "RegistrationSuccesful", user.Email);
 
 
@@ -173,7 +213,6 @@ namespace NanhiDuniya.Service.Services
                 PhoneNumber = model.PhoneNumber,
             };
         }
-
         public async Task<ResultResponse> ResetPassword(ResetPasswordDto model)
         {
             var user = await _userManager.FindByEmailAsync(model.Email);
@@ -211,10 +250,7 @@ namespace NanhiDuniya.Service.Services
 
             return new ResultResponse { IsSuccess = true };
         }
-        private static ResultResponse UserAlreadyExistsResponse()
-        {
-            return new ResultResponse { Message = "User already exists!" };
-        }
+
         private async Task<ApplicationUser?> FindUserByEmail(string? email)
         {
             // Logic to find a user by email using the user manager
@@ -226,75 +262,6 @@ namespace NanhiDuniya.Service.Services
             return string.Join(", ", errors.Select(error => error.Description));
         }
 
-        private async Task<bool> ValidatePassword(ApplicationUser user, string? password)
-        {
-            // Logic to validate the provided password against the user's stored password hash
-            return await _userManager.CheckPasswordAsync(user, password!);
-        }
-
-        private async Task<LoginResponse> BuildLoginResponse(ApplicationUser user)
-        {
-            // Retrieve user roles and generate authentication token
-            var userRoles = await _userManager.GetRolesAsync(user);
-            var authClaims = BuildAuthClaims(user, userRoles);
-            var token = GetToken(authClaims);
-
-            // Return a successful login response with the generated token and user information
-            return new LoginResponse
-            {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
-                UserID = user.Id,
-                ExpirationTime = token.ValidTo,
-                IsSuccess = true,
-            };
-        }
-
-        private static List<Claim> BuildAuthClaims(ApplicationUser user, IList<string> userRoles)
-        {
-            // Logic to build a list of claims for the authentication token
-            var authClaims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()!),
-                new("FirstName", user.FirstName ?? string.Empty),
-                new("LastName", user.LastName ?? string.Empty),
-                new("Email", user.Email!),
-                new("UserID", user.Id.ToString()!),
-                new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
-
-            List<string> roleList = [];
-            // Add each user role as a claim with the type "Role"
-            foreach (var userRole in userRoles)
-            {
-                authClaims.Add(new Claim(ClaimTypes.Role, userRole));
-                roleList.Add(userRole);
-            }
-
-            authClaims.Add(new Claim("UserRoles", Newtonsoft.Json.JsonConvert.SerializeObject(roleList)));
-
-            return authClaims;
-        }
-
-        private JwtSecurityToken GetToken(List<Claim> authClaims)
-        {
-            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtService.Secret!));
-
-            var token = new JwtSecurityToken(
-                issuer: _jwtService.ValidIssuer,
-                audience: _jwtService.ValidAudience,
-                expires: DateTime.UtcNow.AddDays(1),
-                claims: authClaims,
-                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                );
-
-            return token;
-        }
-
-        private static LoginResponse IncorrectPasswordResponse()
-        {
-            // Return a response indicating that the provided password is incorrect
-            return new LoginResponse { Message = "Incorrect password!" };
-        }
         #endregion
     }
 }

@@ -80,21 +80,30 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
 
         #region Authentication Token and handshake endpoints 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login(LoginRequestDto model)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new LoginResponseResource() { IsSuccess = false, Message = StaticData.GenericExceptionMessage });
-            }
             var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-            if (!result.IsSuccess)
+            if (result == null)
             {
                 _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
-                return BadRequest(_mapper.Map<LoginResponseResource>(result));
+                return Unauthorized();
             }
             _logger.LogInformation("User {Username} logged in successfully.", model.Email);
-            return Ok(_mapper.Map<LoginResponseResource>(result));
+            return Ok(result);
         }
+
+        //[HttpPost("RefreshToken")]
+        //public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenDto request)
+        //{
+        //    var authResponse = await _accountService.VerifyRefreshToken(request);
+
+        //    if (authResponse == null)
+        //    {
+        //        return Unauthorized();
+        //    }
+
+        //    return Ok(authResponse);
+        //}
 
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)

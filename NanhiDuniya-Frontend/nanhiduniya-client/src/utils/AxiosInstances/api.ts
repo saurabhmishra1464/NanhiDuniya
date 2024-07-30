@@ -1,13 +1,22 @@
-// utils/api.ts
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
+import https from 'https';
 
-const axiosInstanceUserManagement = axios.create({
+// Create an HTTPS agent that ignores SSL certificate validation
+const agent = new https.Agent({  
+  rejectUnauthorized: false
+});
+
+// Create an Axios instance with default settings
+const axiosInstance = axios.create({
   baseURL: 'https://localhost:7777',
-//   timeout: 5000, // Timeout after 5 seconds
+  httpsAgent: agent,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+
+export default axiosInstance;
+
 
 // // Centralized error handler
 // const handleErrorResponse = (error: AxiosError<any>) => {
@@ -36,12 +45,12 @@ const axiosInstanceUserManagement = axios.create({
 
 
 // Axios instance for another microservice
-const axiosInstanceB = axios.create({
-  baseURL: 'https://microservice-b-url/api',
-  timeout: 5000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// const axiosInstanceB = axios.create({
+//   baseURL: 'https://microservice-b-url/api',
+//   timeout: 5000,
+//   headers: {
+//     'Content-Type': 'application/json',
+//   },
+// });
 
-export { axiosInstanceUserManagement, axiosInstanceB };
+export { axiosInstance};

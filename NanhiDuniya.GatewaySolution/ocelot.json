@@ -14,23 +14,32 @@
       ],
       "UpstreamPathTemplate": "/api/Account/ResetPassword",
       "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Account/Login",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7014
+        }
+      ],
+      "UpstreamPathTemplate": "/api/Account/Login",
+      "UpstreamHttpMethod": [ "POST" ]
     }
-    //,
-    //{
-    //  "DownstreamPathTemplate": "/api/product/{id}",
-    //  "DownstreamScheme": "https",
-    //  "DownstreamHostAndPorts": [
-    //    {
-    //      "Host": "localhost",
-    //      "Port": 7000
-    //    }
-    //  ],
-    //  "UpstreamPathTemplate": "/api/product/{id}",
-    //  "UpstreamHttpMethod": [ "Get", "DELETE" ],
-    //  "AuthenticationOptions": {
-    //    "AuthenticationProviderKey": "Bearer"
-    //  }
-    //},
+    ,
+    {
+      "DownstreamPathTemplate": "/api/Account/RefreshToken",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7014
+        }
+      ],
+      "UpstreamPathTemplate": "/api/Account/RefreshToken",
+      "UpstreamHttpMethod": [ "POST" ]
+    }
     //{
     //  "DownstreamPathTemplate": "/api/product",
     //  "DownstreamScheme": "https",

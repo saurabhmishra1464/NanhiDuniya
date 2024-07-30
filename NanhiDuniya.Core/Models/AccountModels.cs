@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NanhiDuniya.Core.Resources.AccountDtos;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -25,11 +26,17 @@ namespace NanhiDuniya.Core.Models
 
     public class LoginResponse
     {
-        public string? UserID { get; set; }
-        public string? Token { get; set; }
-        public DateTime? ExpirationTime { get; set; }
-        public bool IsSuccess { get; set; }
-        public string? Message { get; set; }
+        public string UserId { get; set; }
+        public string Token { get; set; }
+        public string RefreshToken { get; set; }
+        //public bool IsEmailConfirmed { get; set; }
+    }
+
+    public class RefreshTokenDto
+    {
+        public string UserId { get; set; }
+        public string Token { get; set; }
+        public string RefreshToken { get; set; }
     }
 
     public class ForgotPasswordModel

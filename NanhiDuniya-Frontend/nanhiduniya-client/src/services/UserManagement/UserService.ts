@@ -22,18 +22,18 @@
 //   export default UserService;
 
 
-import ResetPassword from '@/model/User';
-import { axiosInstanceUserManagement } from '../../utils/AxiosInstances/api';
+import { LoginDto, ResetPassword } from '@/model/User';
+import { axiosInstance } from '../../utils/AxiosInstances/api';
 import { ApiResponse } from '../Responses/ApiResponse';
 import axios, { AxiosError } from 'axios';
 
 const resetPassword = async (resetPasswordData: ResetPassword): Promise<ApiResponse> => {
   try {
-    const response = await axiosInstanceUserManagement.post<ApiResponse>('/api/Account/ResetPassword', resetPasswordData);
+    const response = await axiosInstance.post<ApiResponse>('/api/Account/ResetPassword', resetPasswordData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-        
+
       // If error.response is available, it means the error is from the API
       if (error.response) {
         // Pass the error response directly, or you can customize it further
@@ -49,8 +49,18 @@ const resetPassword = async (resetPasswordData: ResetPassword): Promise<ApiRespo
   }
 };
 
+const login = async (loginData: LoginDto) => {
+  debugger
+  try {
+    const response = await axiosInstance.post('/api/Account/Login', loginData);
+    return response.data;
+  } catch (error) {
+  }
+}
+
 const UserService = {
   resetPassword,
+  login
 };
 
 export default UserService;
