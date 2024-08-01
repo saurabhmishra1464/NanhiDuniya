@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Azure.Core;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -8,6 +10,7 @@ using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,59 +20,30 @@ namespace NanhiDuniya.Service.Services
     public class TokenService : ITokenService
     {
         #region Global declarations 
-        private readonly NanhiDuniyaDbContext _dbContext;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
-        private readonly IMapper _mapper;
         private readonly JWTService _jwtService;
-        private readonly IConfiguration _configuration;
-        private readonly IUserService _userService;
-        private readonly ILogger<AccountService> _logger;
-        private readonly string _encryptionKey = "YourSecretKey";
-
-        //private const string _loginProvider = "NanhiDuniyaUserManagementAPI";
-        //private const string _refreshToken = "RefreshToken";
-        public TokenService(NanhiDuniyaDbContext context,
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ILogger<TokenService> _logger;
+        private readonly ITokenRepository _tokenRepository;
+        public TokenService(
             UserManager<ApplicationUser> userManager,
-            IMapper mapper,
             IOptions<JWTService> options,
-            RoleManager<IdentityRole> roleManager,
-            IEmailClientService emailClient,
-            IConfiguration configuration,
-            IUserService userService,
-            ILogger<AccountService> logger
+            ILogger<TokenService> logger,
+            ITokenRepository tokenRepository
 
             )
         {
-            _dbContext = context;
             _userManager = userManager;
-            _roleManager = roleManager;
+            _logger = logger;
             _jwtService = options.Value;
-            _mapper = mapper;
-            _configuration = configuration;
-            _userService = userService;
-            this._logger = logger;
+            _tokenRepository = tokenRepository;
         }
         #endregion
-        public async Task<string> GenerateRefreshToken(string userId)
+        public async Task<string> GenerateRefreshToken()
         {
             var refreshToken = GenerateRandomString(); // Replace with your random token generation logic
-            var encryptedRefreshToken = Encrypt(refreshToken);
-
-            var userRefreshToken = new UserRefreshToken
-            {
-                UserId = userId,
-                RefreshToken = encryptedRefreshToken,
-                Expires = DateTime.UtcNow.AddDays(15),
-                Created = DateTime.UtcNow
-            };
-
-            await _dbContext.UserRefreshTokens.AddAsync(userRefreshToken);
-            await _dbContext.SaveChangesAsync();
 
             return refreshToken;
         }
-
         private string GenerateRandomString()
         {
             var randomBytes = new byte[64];
@@ -80,41 +54,28 @@ namespace NanhiDuniya.Service.Services
             }
         }
 
-        private static string Encrypt(string plainText)
+        public async Task<string> GenerateAccessToken(string userId)
         {
-            var newRefreshTokenKey = GenerateRandomKey(32);
-            Environment.SetEnvironmentVariable("REFRESH_TOKEN_SECRET", newRefreshTokenKey);
-            var refreshTokenKey = Environment.GetEnvironmentVariable("REFRESH_TOKEN_SECRET");
-            byte[] iv = new byte[16];
-            byte[] array = Encoding.UTF8.GetBytes(refreshTokenKey);
-            using (Aes aes = Aes.Create())
+            var user = await FindUserById(userId);
+
+            if (user == null)
             {
-                aes.Key = array;
-                aes.IV = iv;
-                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
-                using (MemoryStream memoryStream = new MemoryStream())
-                {
-                    using (CryptoStream cryptoStream = new CryptoStream(memoryStream,
-         encryptor, CryptoStreamMode.Write))
-
-                    {
-                        using (StreamWriter streamWriter = new StreamWriter(cryptoStream))
-                        {
-                            streamWriter.Write(plainText);
-                        }
-                    }
-                    return Convert.ToBase64String(memoryStream.ToArray());
-
-                }
+                _logger.LogError("Invalid user or access denied");
+                throw new UnauthorizedAccessException();
             }
-        }
+            var roles = await _userManager.GetRolesAsync(user);
+            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
+            var userClaims = await _userManager.GetClaimsAsync(user);
 
-        public async Task<string> GenerateJWT(IEnumerable<Claim> claims)
-        {
-            var newJwtKey = GenerateRandomKey(32);
-            Environment.SetEnvironmentVariable("JWT_SECRET", newJwtKey);
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET");
-            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var claims = new List<Claim>
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim("uid", user.Id),
+            }
+            .Union(userClaims).Union(roleClaims);
+            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtService.Secret!));
 
             var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
 
@@ -129,19 +90,62 @@ namespace NanhiDuniya.Service.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        private static string GenerateRandomKey(int length)
+        public async Task<RefreshTokenDto> VerifyRefreshToken(RefreshTokenDto request)
         {
-            const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_-+=";
-            // Include special characters
-            byte[] data = new byte[length];
-            RandomNumberGenerator.Fill(data);
-            var builder = new StringBuilder();
-            for (int i = 0; i < length; i++)
+            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+            var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
+            var userId = tokenContent.Claims.ToList().FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+            _logger.LogError("Verifying refresh token for user ID: {UserId}", userId);
+            var user = await FindUserById(userId);
+
+            if (user == null || !user.IsActive)
             {
-                builder.Append(chars[data[i] % chars.Length]);
+                _logger.LogWarning("Invalid user or access denied");
+                throw new UnauthorizedAccessException();
             }
-            return builder.ToString();
+
+            var storedToken = await _tokenRepository.GetRefreshTokenAsync(userId,request.RefreshToken);
+            if (storedToken == null || storedToken.RefreshToken != request.RefreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            var accessToken = await GenerateAccessToken(user.Id);
+
+            return new RefreshTokenDto
+            {
+                Token = accessToken,
+                RefreshToken = storedToken.RefreshToken
+            };
+        }
+        //public async Task RevokeRefreshToken(string userId)
+        //{
+        //    var tokens = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
+        //    foreach (var token in tokens)
+        //    {
+        //        token.IsRevoked = true;
+        //        await _tokenRepository.UpdateRefreshTokenAsync(token);
+        //    }
+        //}
+
+        public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)
+        {
+
+            await _tokenRepository.AddRefreshTokenAsync(refreshToken);
+        }
+        //public async Task<UserRefreshToken> GetRefreshTokenAsync(string userId)
+        //{
+        //    return await _tokenRepository.GetRefreshTokenAsync(userId);
+        //}
+        public async Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken)
+        {
+            await _tokenRepository.DeleteRefreshTokenAsync(refreshToken);
         }
 
+        private async Task<ApplicationUser?> FindUserById(string? userId)
+        {
+            // Logic to find a user by email using the user manager
+            return await _userManager.FindByIdAsync(userId!);
+        }
     }
 }

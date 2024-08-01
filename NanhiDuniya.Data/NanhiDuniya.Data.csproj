@@ -24,8 +24,4 @@
     <ProjectReference Include="..\NanhiDuniya.Core\NanhiDuniya.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Repositories\" />
-  </ItemGroup>
-
 </Project>

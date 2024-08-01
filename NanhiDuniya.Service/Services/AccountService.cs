@@ -29,38 +29,27 @@ namespace NanhiDuniya.Service.Services
     public class AccountService : IAccountService
     {
         #region Global declarations 
-        private readonly NanhiDuniyaDbContext _dbContext;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IEmailClientService _emailClient;
         private readonly IMapper _mapper;
-        private readonly JWTService _jwtService;
-        private readonly IConfiguration _configuration;
         private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
         private readonly ILogger<AccountService> _logger;
-
-        //private const string _loginProvider = "NanhiDuniyaUserManagementAPI";
-        //private const string _refreshToken = "RefreshToken";
         public AccountService(NanhiDuniyaDbContext context,
             UserManager<ApplicationUser> userManager,
             IMapper mapper,
-            IOptions<JWTService> options,
             RoleManager<IdentityRole> roleManager,
             IEmailClientService emailClient,
-            IConfiguration configuration,
             IUserService userService,
             ILogger<AccountService> logger,
             ITokenService tokenService
             )
         {
-            _dbContext = context;
             _userManager = userManager;
             _roleManager = roleManager;
-            _jwtService = options.Value;
             _emailClient = emailClient;
             _mapper = mapper;
-            _configuration = configuration;
             _userService = userService;
             _tokenService = tokenService;
             this._logger = logger;
@@ -70,51 +59,28 @@ namespace NanhiDuniya.Service.Services
         #region Authentication Token/Login
         public async Task<LoginResponse> Login(LoginModel loginDto)
         {
-           var _user = await _userManager.FindByEmailAsync(loginDto.Email);
-            bool isValidUser = await _userManager.CheckPasswordAsync(_user, loginDto.Password);
+           var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            bool isValidUser = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
-            if (_user == null || isValidUser == false)
+            if (user == null || isValidUser == false)
             {
                 _logger.LogWarning($"User with email {loginDto.Email} was not found");
                 return null;
             }
 
-            var roles = await _userManager.GetRolesAsync(_user);
-            var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
-            var userClaims = await _userManager.GetClaimsAsync(_user);
-
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, _user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, _user.Email),
-                new Claim("uid", _user.Id),
-            }
-            .Union(userClaims).Union(roleClaims);
-            //var emailConfirmationStatus = await _userManager.IsEmailConfirmedAsync(_user);
-            var token = await _tokenService.GenerateJWT(claims);
-            var refreshToken = await _tokenService.GenerateRefreshToken(_user.Id);
+            var token = await _tokenService.GenerateAccessToken(user.Id);
+            var refreshToken = await _tokenService.GenerateRefreshToken();
 
             var loginResponse= new LoginResponse
             {
                 Token = token,
-                UserId = _user.Id,
+                UserId = user.Id,
                 RefreshToken = refreshToken,
-                //IsEmailConfirmed = true
             };
             var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
-            var users = await _dbContext.UserRefreshTokens.FirstOrDefaultAsync(u => u.UserId == _user.Id);
-            if (users != null)
-            {
-                _dbContext.UserRefreshTokens.Attach(users);
-                _dbContext.UserRefreshTokens.Remove(users);
-                await _dbContext.SaveChangesAsync();
-            }
-            await _dbContext.UserRefreshTokens.AddAsync(newRefreshToken);
-            await _dbContext.SaveChangesAsync();
+            await _tokenService.AddRefreshTokenAsync(newRefreshToken);
             return loginResponse;
         }
-
 
         #endregion
 
@@ -232,7 +198,6 @@ namespace NanhiDuniya.Service.Services
                 return new ResultResponse { Message = "Failed to reset password." };
             }
         }
-
         public async Task<ResultResponse> ValidateResetToken(string token, string email)
         {
             var user = await _userManager.FindByEmailAsync(email);
@@ -250,13 +215,11 @@ namespace NanhiDuniya.Service.Services
 
             return new ResultResponse { IsSuccess = true };
         }
-
         private async Task<ApplicationUser?> FindUserByEmail(string? email)
         {
             // Logic to find a user by email using the user manager
             return await _userManager.FindByEmailAsync(email!);
         }
-
         private string BuildErrorMessage(IEnumerable<IdentityError> errors)
         {
             return string.Join(", ", errors.Select(error => error.Description));

@@ -12,12 +12,11 @@ namespace NanhiDuniya.Core.Models
         public string RefreshToken { get; set; } = null!;
         public DateTime Expires { get; set; }
         public DateTime Created { get; set; }
-
-        public UserRefreshToken()
-        {
+        public UserRefreshToken() {
             Expires = DateTime.UtcNow.AddDays(15);
             Created = DateTime.UtcNow;
         }
         public string? UserId { get; set; }
+        public bool IsRevoked { get; set; }
     }
 }

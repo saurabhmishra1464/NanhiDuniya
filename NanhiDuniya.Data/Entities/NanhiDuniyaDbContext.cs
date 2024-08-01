@@ -33,6 +33,8 @@ public partial class NanhiDuniyaDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(e => e.RefreshToken).IsRequired();
             entity.Property(e => e.Expires).IsRequired();
             entity.Property(e => e.Created).IsRequired();
+            entity.Property(e => e.IsRevoked).HasDefaultValue(false);
+            entity.HasIndex(e => e.IsRevoked);
         });
 
         OnModelCreatingPartial(modelBuilder);
