@@ -1,11 +1,15 @@
 ﻿using AutoMapper;
+using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Constants;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Service.Services;
 using NanhiDuniya.UserManagement.Api.Extentions;
 
@@ -20,11 +24,12 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         private readonly IMapper _mapper;
         private readonly ILogger<AccountController> _logger;
         private readonly IPasswordService _passwordService;
-
-        public AccountController(IAccountService accountService, IPasswordService passwordService, IMapper mapper, ILogger<AccountController> logger)
+        private readonly ITokenService _tokenService;
+        public AccountController(IAccountService accountService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
         {
             _accountService = accountService;
             _passwordService = passwordService;
+            _tokenService = tokenService;
             _mapper = mapper;
             _logger = logger;
         }
@@ -92,17 +97,23 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             return Ok(result);
         }
 
-        //[HttpPost("RefreshToken")]
-        //public async Task<ActionResult> RefreshToken([FromBody] RefreshTokenDto request)
+        [HttpPost("RefreshToken")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto request)
+        {
+            var authResponse = await _tokenService.VerifyRefreshToken(request);
+            if (authResponse==null)
+            {
+                throw new UnauthorizedAccessException();
+            }
+
+            return Ok(new { authResponse.Token,authResponse.RefreshToken });
+        }
+
+        //[HttpPost("Logout")]
+        //public async Task<IActionResult> Logout(string userId)
         //{
-        //    var authResponse = await _accountService.VerifyRefreshToken(request);
-
-        //    if (authResponse == null)
-        //    {
-        //        return Unauthorized();
-        //    }
-
-        //    return Ok(authResponse);
+        //    var isloggedout = _tokenService.RevokeRefreshToken(userId);
+        //    return Ok(isloggedout);
         //}
 
         [HttpPost("ResetPassword")]

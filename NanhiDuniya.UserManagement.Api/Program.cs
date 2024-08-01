@@ -12,6 +12,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using NanhiDuniya.Core.Constants;
 using Microsoft.Extensions.DependencyInjection;
+using NanhiDuniya.Core.Interfaces;
+using NanhiDuniya.Data.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -65,7 +67,7 @@ builder.Services.AddIdentityCore<ApplicationUser>()
     .AddTokenProvider<DataProtectorTokenProvider<ApplicationUser>>("NanhiDuniyaUserManagementAPI")
     .AddEntityFrameworkStores<NanhiDuniyaDbContext>()
     .AddDefaultTokenProviders();
-
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 // Adding Authentication
 builder.Services.AddAuthentication(options =>
 {

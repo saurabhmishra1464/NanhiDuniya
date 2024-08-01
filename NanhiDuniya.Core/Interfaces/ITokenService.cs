@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NanhiDuniya.Core.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -9,8 +10,13 @@ namespace NanhiDuniya.Service.Services
 {
     public interface ITokenService
     {
-        Task<String> GenerateRefreshToken(string userId);
-        Task<string> GenerateJWT(IEnumerable<Claim> Claims);
-
+        Task<String> GenerateRefreshToken();
+        Task<string> GenerateAccessToken(string userId);
+        //Task RevokeRefreshToken(string userId);
+        Task<RefreshTokenDto> VerifyRefreshToken(RefreshTokenDto request);
+        //Task<UserRefreshToken> GetRefreshTokenAsync(string userId, string refreshToken);
+        Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
+        //Task UpdateRefreshTokenAsync(UserRefreshToken refreshToken);
+        Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
     }
 }

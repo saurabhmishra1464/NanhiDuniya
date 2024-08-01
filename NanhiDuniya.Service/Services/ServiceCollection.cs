@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Resources.ResponseDtos;
 using NanhiDuniya.Data.Entities;
+using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Service.Mapping;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace NanhiDuniya.Service.Services
             services.AddHttpClient<EmailClientService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<ITokenService, TokenService>();
+            //services.AddScoped<ITokenRepository, TokenRepository>();
             //services.Configure<EmailSettings>(Configuration.GetSection("EmailSettings"));
             services.AddScoped<IEmailClientService, EmailClientService>();
             services.AddSingleton<IPasswordService, PasswordService>();
