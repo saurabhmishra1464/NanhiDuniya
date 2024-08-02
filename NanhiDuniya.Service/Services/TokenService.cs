@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
+using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -118,25 +119,27 @@ namespace NanhiDuniya.Service.Services
                 RefreshToken = storedToken.RefreshToken
             };
         }
-        //public async Task RevokeRefreshToken(string userId)
-        //{
-        //    var tokens = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
-        //    foreach (var token in tokens)
-        //    {
-        //        token.IsRevoked = true;
-        //        await _tokenRepository.UpdateRefreshTokenAsync(token);
-        //    }
-        //}
+        public async Task<bool> RevokeRefreshToken(string userId)
+        {
+            var existingRefreshTokens = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
+            if (existingRefreshTokens == null)
+            {
+                throw new KeyNotFoundException();
+            }
+            foreach (var token in existingRefreshTokens)
+            {
+                token.IsRevoked = true;
+                await _tokenRepository.UpdateRefreshTokenAsync(token);
+            }
+            return true;
+        }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)
         {
 
             await _tokenRepository.AddRefreshTokenAsync(refreshToken);
         }
-        //public async Task<UserRefreshToken> GetRefreshTokenAsync(string userId)
-        //{
-        //    return await _tokenRepository.GetRefreshTokenAsync(userId);
-        //}
+
         public async Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken)
         {
             await _tokenRepository.DeleteRefreshTokenAsync(refreshToken);
