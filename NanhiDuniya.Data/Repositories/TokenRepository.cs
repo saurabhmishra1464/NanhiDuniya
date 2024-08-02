@@ -42,5 +42,10 @@ namespace NanhiDuniya.Data.Repositories
             _dbcontext.UserRefreshTokens.Remove(refreshToken);
             await _dbcontext.SaveChangesAsync();
         }
+        public async Task UpdateRefreshTokenAsync(UserRefreshToken refreshToken)
+        {
+            _dbcontext.Entry(refreshToken).State = EntityState.Modified;
+            await _dbcontext.SaveChangesAsync();
+        }
     }
 }

@@ -109,12 +109,12 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             return Ok(new { authResponse.Token,authResponse.RefreshToken });
         }
 
-        //[HttpPost("Logout")]
-        //public async Task<IActionResult> Logout(string userId)
-        //{
-        //    var isloggedout = _tokenService.RevokeRefreshToken(userId);
-        //    return Ok(isloggedout);
-        //}
+        [HttpPost("Logout")]
+        public async Task<IActionResult> Logout(string userId)
+        {
+            var isloggedout = await _tokenService.RevokeRefreshToken(userId);
+            return Ok(isloggedout);
+        }
 
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)

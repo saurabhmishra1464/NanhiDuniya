@@ -13,5 +13,6 @@ namespace NanhiDuniya.Core.Interfaces
         Task<List<UserRefreshToken>> GetListOfRefreshTokensByUserIdAsync(string userId);
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
+        Task UpdateRefreshTokenAsync(UserRefreshToken refreshToken);
     }
 }
