@@ -28,6 +28,7 @@ namespace NanhiDuniya.Service.Services
             // Register AutoMapper
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
             services.Configure<NanhiDuniyaServicesSettings>(Configuration.GetSection("NanhiDuniyaServices"));
+            services.AddHttpContextAccessor();
             services.AddHttpClient<EmailClientService>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<ITokenService, TokenService>();

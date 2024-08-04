@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Azure.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -25,11 +26,13 @@ namespace NanhiDuniya.Service.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TokenService> _logger;
         private readonly ITokenRepository _tokenRepository;
+        //private readonly IHttpContextAccessor _httpContextAccessor;
         public TokenService(
             UserManager<ApplicationUser> userManager,
             IOptions<JWTService> options,
             ILogger<TokenService> logger,
             ITokenRepository tokenRepository
+            //IHttpContextAccessor httpContextAccessor
 
             )
         {
@@ -37,12 +40,22 @@ namespace NanhiDuniya.Service.Services
             _logger = logger;
             _jwtService = options.Value;
             _tokenRepository = tokenRepository;
+            //_httpContextAccessor = httpContextAccessor;
         }
         #endregion
         public async Task<string> GenerateRefreshToken()
         {
             var refreshToken = GenerateRandomString(); // Replace with your random token generation logic
-
+            //var httpContext = _httpContextAccessor.HttpContext;
+            //var cookieOptions = new CookieOptions
+            //{
+            //    HttpOnly = true,
+            //    Path = "/",
+            //    Secure = true, // Set to true in production
+            //    SameSite = SameSiteMode.Strict
+            //};
+            //httpContext.Response.Cookies.Append("refreshtoken", refreshToken, cookieOptions);
+            
             return refreshToken;
         }
         private string GenerateRandomString()
@@ -106,7 +119,7 @@ namespace NanhiDuniya.Service.Services
                 throw new UnauthorizedAccessException();
             }
 
-            var storedToken = await _tokenRepository.GetRefreshTokenAsync(userId,request.RefreshToken);
+            var storedToken = await _tokenRepository.GetRefreshTokenAsync(userId, request.RefreshToken);
             if (storedToken == null || storedToken.RefreshToken != request.RefreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
             {
                 throw new UnauthorizedAccessException();
@@ -119,19 +132,22 @@ namespace NanhiDuniya.Service.Services
                 RefreshToken = storedToken.RefreshToken
             };
         }
-        public async Task<bool> RevokeRefreshToken(string userId)
+        public async Task RevokeRefreshToken(string userId)
         {
             var existingRefreshTokens = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
-            if (existingRefreshTokens == null)
+            if (existingRefreshTokens == null || existingRefreshTokens.Count == 0)
             {
                 throw new KeyNotFoundException();
             }
             foreach (var token in existingRefreshTokens)
             {
-                token.IsRevoked = true;
-                await _tokenRepository.UpdateRefreshTokenAsync(token);
+                if (token.IsRevoked == false)
+                {
+                    token.IsRevoked = true;
+                    await _tokenRepository.UpdateRefreshTokenAsync(token);
+            
+                }
             }
-            return true;
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)

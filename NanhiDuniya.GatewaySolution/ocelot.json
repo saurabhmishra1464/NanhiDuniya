@@ -39,22 +39,19 @@
       ],
       "UpstreamPathTemplate": "/api/Account/RefreshToken",
       "UpstreamHttpMethod": [ "POST" ]
+    },
+    {
+      "DownstreamPathTemplate": "/api/Account/RevokeRefreshToken",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 7014
+        }
+      ],
+      "UpstreamPathTemplate": "/api/Account/RevokeRefreshToken",
+      "UpstreamHttpMethod": [ "POST" ]
     }
-    //{
-    //  "DownstreamPathTemplate": "/api/product",
-    //  "DownstreamScheme": "https",
-    //  "DownstreamHostAndPorts": [
-    //    {
-    //      "Host": "localhost",
-    //      "Port": 7000
-    //    }
-    //  ],
-    //  "UpstreamPathTemplate": "/api/product",
-    //  "UpstreamHttpMethod": [ "POST", "PUT" ],
-    //  "AuthenticationOptions": {
-    //    "AuthenticationProviderKey": "Bearer"
-    //  }
-    //},
 
     ////"CouponAPI": "https://localhost:7001",
     //{

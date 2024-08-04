@@ -36,6 +36,8 @@ namespace NanhiDuniya.Service.Services
         private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
         private readonly ILogger<AccountService> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly JWTService _jwtService;
         public AccountService(NanhiDuniyaDbContext context,
             UserManager<ApplicationUser> userManager,
             IMapper mapper,
@@ -43,7 +45,9 @@ namespace NanhiDuniya.Service.Services
             IEmailClientService emailClient,
             IUserService userService,
             ILogger<AccountService> logger,
-            ITokenService tokenService
+            ITokenService tokenService,
+            IOptions<JWTService> options,
+            IHttpContextAccessor httpContextAccessor
             )
         {
             _userManager = userManager;
@@ -52,6 +56,8 @@ namespace NanhiDuniya.Service.Services
             _mapper = mapper;
             _userService = userService;
             _tokenService = tokenService;
+            _jwtService = options.Value;
+            _httpContextAccessor = httpContextAccessor;
             this._logger = logger;
         }
         #endregion
@@ -71,17 +77,23 @@ namespace NanhiDuniya.Service.Services
             var token = await _tokenService.GenerateAccessToken(user.Id);
             var refreshToken = await _tokenService.GenerateRefreshToken();
 
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(token);
+            var expiration = jwtSecurityToken.ValidTo;
             var loginResponse= new LoginResponse
             {
                 Token = token,
                 UserId = user.Id,
                 RefreshToken = refreshToken,
+                ExpiresAt = expiration,
+                ExpiresIn = (int)(expiration - DateTime.UtcNow).TotalSeconds
             };
             var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
             await _tokenService.AddRefreshTokenAsync(newRefreshToken);
             return loginResponse;
         }
 
+        
         #endregion
 
         #region User Registration methods
@@ -210,7 +222,7 @@ namespace NanhiDuniya.Service.Services
                 TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
             if (!result)
             {
-                return new ResultResponse { IsSuccess = true, Message = "Token Expired" };
+                return new ResultResponse { IsSuccess = false, Message = "Token Expired" };
             }
 
             return new ResultResponse { IsSuccess = true };

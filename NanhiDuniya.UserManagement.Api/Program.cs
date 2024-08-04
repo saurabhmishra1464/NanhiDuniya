@@ -74,10 +74,22 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = "NanhiDuniyaUserManagementAPI",
+        ValidAudience = "NanhiDuniyaUserManagementAPIClient",
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("thisismycustomSecretkeyforauthentication"))
+    };
 });
 
 // Adding Jwt Bearer
-builder.Services.AddAuthentication().AddJwtBearer();
+//builder.Services.AddAuthentication().AddJwtBearer();
 
 builder.Services.AddCors(options =>
 {

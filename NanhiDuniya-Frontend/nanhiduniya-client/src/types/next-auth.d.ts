@@ -7,24 +7,25 @@ import { JWT as NextAuthJWT } from 'next-auth/jwt';
 declare module 'next-auth' {
   interface Session {
     user: {
-      id?: string;
-      expiresAt?:number;
-    };
+      _id?: string;
+      token: string;
+      refreshToken: string;
+    }& DefaultSession["user"];
   }
 
-  interface User{
-    id:string;
+  interface User {
+    _id?: string;
+    expiresAt?: DateTime;
     token: string;
     refreshToken: string;
-    expiresIn: number;
   }
-}
 
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    token:string;
-    refreshToken:string;
-    accessTokenExpires: number;
-  }
 }
+  declare module 'next-auth/jwt' {
+    interface JWT {
+      _id: string;
+      expiresAt?: DateTime;
+      token: string;
+      refreshToken: string;
+    }
+  }

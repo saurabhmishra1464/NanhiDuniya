@@ -7,6 +7,8 @@ import { hasTokenExpired } from './utils/HasTokenExpred';
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl;
   const token = await getToken({ req: request });
+  console.log("inside Midelwarea",token);
+//  localStorage.setItem('accessToken', token?.token as string);
 
   if (token) {
     if (url.pathname.startsWith('/auth/login')) {

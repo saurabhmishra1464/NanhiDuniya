@@ -1,13 +1,12 @@
 import NextAuth, { NextAuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { axiosInstance } from '@/utils/AxiosInstances/api';
+import { signOut } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
 
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
-    // maxAge: 30 * 24 * 60 * 60, // 30 days
-     maxAge: 10 * 60, // 10 minutes
   },
   providers: [
     CredentialsProvider({
@@ -25,14 +24,13 @@ export const authOptions: NextAuthOptions = {
             email: credentials.email,
             password: credentials.password,
           });
-
           if (response.status === 200 && response.data) {
             return {
               id: response.data.userId,
               token: response.data.token,
               refreshToken: response.data.refreshToken,
+              expiresAt: response.data.expiresAt,
               expiresIn: response.data.expiresIn,
- 
             };
           } else {
             throw new Error(response.data.message || 'Authentication failed');
@@ -45,79 +43,65 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
-      // Initial sign in
-      if (account && user) {
-        return {
-          accessToken: account.access_token,
-          accessTokenExpires: Date.now() + account.expires_in * 1000,
-          refreshToken: account.refresh_token,
-          user
-        }
+    async jwt({ token, user }) {
+      if (user) {
+        token._id = user.id;
+        token.expiresAt = user.expiresAt;
+        token.token = user.token;
+        token.refreshToken = user.refreshToken;
       }
-
-      // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
-        return token
-      }
-
-      // Access token has expired, try to update it
-      return refreshAccessToken(token)
+      // if (Date.now() > new Date(token.expiresAt).getTime()) {
+      //   return await refreshAccessToken(token);
+      // }
+      return token;
     },
     async session({ session, token }) {
-      // session.user = token.user
-      // session.accessToken = token.accessToken
-      // session.error = token.error
-
-      return session
-    }
+      if (token) {
+        session.user._id = token._id;
+        session.user.token = token.token;
+        session.user.refreshToken = token.refreshToken;
+//         Server-Side Token Storage: Store access tokens on the server side, ideally in a secure database or encrypted storage.
+// Token Issuance: When a user authenticates, issue a session ID or a similar token that can be safely stored on the client side (e.g., in a cookie or local storage).
+// Token Retrieval: On each request, the client sends the session ID or token to the server. The server then retrieves the corresponding access token from its secure storage and uses it for authorization.
+      }
+      return session;
+    },
   },
-  pages:{
-signIn: '/auth/login'
+  pages: {
+    signIn: '/auth/login',
   },
   events: {
     async signOut({ session, token }) {
-      // Perform any cleanup or additional logout actions here
-      // For example, you might want to invalidate the token on your backend
       try {
-        await axiosInstance.post('/api/Account/Logout', {}, {
-          headers: { Authorization: `Bearer ${token.accessToken}` }
-        });
+        await axiosInstance.post('/api/Account/revoke-refresh-token');
+        await signOut({ callbackUrl: '/auth/login' });
       } catch (error) {
         console.error('Error during logout:', error);
       }
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  debug: process.env.NODE_ENV === 'development',
 };
 
 async function refreshAccessToken(token:JWT) {
   try {
     const response = await axiosInstance.post('/api/Account/RefreshToken', {
-     UserId: token.id,
-      Token: token.token,
-     refreshToken: token.refreshToken,
+      token: token.token,
+      refreshToken: token.refreshToken,
     });
-
     if (!response.data.ok) {
       throw response.data.message;
     }
-    
-      return {
-        ...token,
-        accessToken: response.data.token,
-        accessTokenExpires: Date.now() + response.data.expiresIn * 1000,
-        refreshToken: response.data.refreshToken ?? token.refreshToken,
-        expiresIn: response.data.expiresIn,
-  }
-  }
-   catch (error) {
-    console.log(error);
     return {
       ...token,
-      error: 'RefreshAccessTokenError'
-    }
+      token: response.data.token,
+      refreshToken: response.data.refreshToken ?? token.refreshToken,
+      expiresIn: response.data.expiresIn,
+    };
+  } catch (error) {
+    console.log(error);
+    return { ...token, error: 'RefreshAccessTokenError' };
   }
 }
 

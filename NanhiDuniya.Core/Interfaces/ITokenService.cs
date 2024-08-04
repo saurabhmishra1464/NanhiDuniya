@@ -12,7 +12,7 @@ namespace NanhiDuniya.Service.Services
     {
         Task<String> GenerateRefreshToken();
         Task<string> GenerateAccessToken(string userId);
-        Task<bool> RevokeRefreshToken(string userId);
+        Task RevokeRefreshToken(string userId);
         Task<RefreshTokenDto> VerifyRefreshToken(RefreshTokenDto request);
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
