@@ -19,10 +19,7 @@ namespace NanhiDuniya.Data.Repositories
         }
         public async Task<UserRefreshToken> GetRefreshTokenAsync(string userId, string refreshToken)
         {
-            var userRefreshTokens = await _dbcontext.UserRefreshTokens
-                .Where(rt => rt.UserId == userId)
-                .ToListAsync();
-            return userRefreshTokens.FirstOrDefault(rt => rt.RefreshToken == refreshToken);
+            return await _dbcontext.UserRefreshTokens.FirstOrDefaultAsync(rt=>rt.UserId==userId && rt.RefreshToken== refreshToken);
         }
 
         public async Task<List<UserRefreshToken>> GetListOfRefreshTokensByUserIdAsync(string userId)
