@@ -26,13 +26,10 @@ axiosInstance.interceptors.request.use(
   async (config) => {
     // Retrieve user information from local storage
     const session = await getSession();
-    console.log('Session:inside apis', session);
 const token = session?.user.token;
-console.log('Tokens inside apiss:', token);
    
     // Add Authorization header if the user has an access token
     if (token) {
-      console.log("inside api.ts file",token);
       config.headers["Authorization"] = `Bearer ${token}`;
     } else {
       // Set an empty Authorization header if no access token is available

@@ -10,6 +10,7 @@ using Microsoft.IdentityModel.Tokens;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
+using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Data.Entities;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
@@ -104,7 +105,7 @@ namespace NanhiDuniya.Service.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<RefreshTokenDto> VerifyRefreshToken(RefreshTokenDto request)
+        public async Task<RefreshTokenResponse> VerifyRefreshToken(RefreshTokenDto request)
         {
             var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
             var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
@@ -125,11 +126,13 @@ namespace NanhiDuniya.Service.Services
                 throw new UnauthorizedAccessException();
             }
             var accessToken = await GenerateAccessToken(user.Id);
-
-            return new RefreshTokenDto
+            var newtokenContent = jwtSecurityTokenHandler.ReadJwtToken(accessToken);
+            var expiration = newtokenContent.ValidTo;
+            return new RefreshTokenResponse
             {
                 Token = accessToken,
-                RefreshToken = storedToken.RefreshToken
+                RefreshToken = storedToken.RefreshToken,
+                ExpiresAt = expiration
             };
         }
         public async Task RevokeRefreshToken(string userId)

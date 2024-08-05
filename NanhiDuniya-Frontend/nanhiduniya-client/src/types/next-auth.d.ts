@@ -11,6 +11,10 @@ declare module 'next-auth' {
       token: string;
       refreshToken: string;
     }& DefaultSession["user"];
+    Error?:{
+      message?:string;
+      statusCode?:number;
+    };
   }
 
   interface User {
@@ -27,5 +31,9 @@ declare module 'next-auth' {
       expiresAt?: DateTime;
       token: string;
       refreshToken: string;
+      error?:{
+        message?:string;
+        statusCode?:number;
+      };
     }
   }

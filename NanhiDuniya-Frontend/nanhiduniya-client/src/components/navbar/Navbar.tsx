@@ -1,4 +1,3 @@
-// components/Navbar.tsx
 'use client';
 
 import Link from 'next/link';
@@ -6,14 +5,11 @@ import React, { useState } from 'react';
 import { UserCircleIcon, Cog6ToothIcon, QuestionMarkCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { signOut, useSession } from 'next-auth/react';
 import axiosInstance from '@/utils/AxiosInstances/api';
-import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const { data: session, status } = useSession({ required: true });
   const userId = session?.user?._id; 
-console.log("session",session);
-console.log("userId",userId);
   if (status === 'loading') {
     return <div>Loading...</div>;
   }
@@ -21,15 +17,16 @@ console.log("userId",userId);
   if (!session) {
     return <div>You are not logged in.</div>;
   }
-
-  const router = useRouter();
   
   const handleClick = () => {
     setIsOpen(!isOpen);
   }
 
   const logOut = async () => {
+    debugger
     try {
+      const userId = session?.user?._id; 
+      const token = session?.user?.token; 
       await axiosInstance.post('/api/Account/RevokeRefreshToken', { userId });
       await signOut({ callbackUrl: '/auth/login' });
     } catch (error) {
