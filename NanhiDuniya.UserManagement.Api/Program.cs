@@ -88,8 +88,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Adding Jwt Bearer
-//builder.Services.AddAuthentication().AddJwtBearer();
 
 builder.Services.AddCors(options =>
 {

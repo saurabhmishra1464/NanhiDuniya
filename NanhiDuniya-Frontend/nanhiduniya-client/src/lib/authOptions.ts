@@ -4,6 +4,7 @@ import { axiosInstance } from '@/utils/AxiosInstances/api';
 import { signOut } from 'next-auth/react';
 import { JWT } from 'next-auth/jwt';
 
+let lastRefreshTime = 0;
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
@@ -50,9 +51,14 @@ export const authOptions: NextAuthOptions = {
         token.token = user.token;
         token.refreshToken = user.refreshToken;
       }
-      // if (Date.now() > new Date(token.expiresAt).getTime()) {
-      //   return await refreshAccessToken(token);
-      // }
+      if (Date.now() > new Date(token.expiresAt).getTime() && Date.now() - lastRefreshTime > 60000) {
+        lastRefreshTime = Date.now();
+        const refreshedToken = await refreshAccessToken(token);
+        if (refreshedToken) {
+          token = refreshedToken;
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -60,9 +66,16 @@ export const authOptions: NextAuthOptions = {
         session.user._id = token._id;
         session.user.token = token.token;
         session.user.refreshToken = token.refreshToken;
-//         Server-Side Token Storage: Store access tokens on the server side, ideally in a secure database or encrypted storage.
-// Token Issuance: When a user authenticates, issue a session ID or a similar token that can be safely stored on the client side (e.g., in a cookie or local storage).
-// Token Retrieval: On each request, the client sends the session ID or token to the server. The server then retrieves the corresponding access token from its secure storage and uses it for authorization.
+        if (token.error) {
+          session.Error = {
+            statusCode: token.error.statusCode,
+            message: token.error.message
+
+          };
+        }
+        //         Server-Side Token Storage: Store access tokens on the server side, ideally in a secure database or encrypted storage.
+        // Token Issuance: When a user authenticates, issue a session ID or a similar token that can be safely stored on the client side (e.g., in a cookie or local storage).
+        // Token Retrieval: On each request, the client sends the session ID or token to the server. The server then retrieves the corresponding access token from its secure storage and uses it for authorization.
       }
       return session;
     },
@@ -84,25 +97,21 @@ export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === 'development',
 };
 
-async function refreshAccessToken(token:JWT) {
-  try {
-    const response = await axiosInstance.post('/api/Account/RefreshToken', {
-      token: token.token,
-      refreshToken: token.refreshToken,
-    });
-    if (!response.data.ok) {
-      throw response.data.message;
-    }
-    return {
-      ...token,
-      token: response.data.token,
-      refreshToken: response.data.refreshToken ?? token.refreshToken,
-      expiresIn: response.data.expiresIn,
-    };
-  } catch (error) {
-    console.log(error);
-    return { ...token, error: 'RefreshAccessTokenError' };
-  }
+async function refreshAccessToken(token: any) {
+  debugger
+  // try {
+  const response = await axiosInstance.post('/api/Account/RefreshToken', {
+    token: token.token,
+    refreshToken: token.refreshToken,
+    expiresAt: token.expiresAt,
+  });
+
+  return {
+    ...token,
+    token: response.data.token,
+    refreshToken: response.data.refreshToken ?? token.refreshToken,
+    expiresAt: response.data.expiresAt,
+  };
 }
 
 export default NextAuth(authOptions);

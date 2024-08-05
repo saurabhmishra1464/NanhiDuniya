@@ -106,13 +106,13 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("RefreshToken")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto request)
         {
-            var authResponse = await _tokenService.VerifyRefreshToken(request);
-            if (authResponse==null)
+            var response = await _tokenService.VerifyRefreshToken(request);
+            if (response == null)
             {
                 throw new UnauthorizedAccessException();
             }
 
-            return Ok(new { authResponse.Token,authResponse.RefreshToken });
+            return Ok(response);
         }
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("RevokeRefreshToken")]
