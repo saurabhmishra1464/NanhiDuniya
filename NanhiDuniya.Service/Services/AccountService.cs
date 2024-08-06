@@ -85,8 +85,7 @@ namespace NanhiDuniya.Service.Services
                 Token = token,
                 UserId = user.Id,
                 RefreshToken = refreshToken,
-                ExpiresAt = expiration,
-                ExpiresIn = (int)(expiration - DateTime.UtcNow).TotalSeconds
+                ExpiresAt = expiration
             };
             var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
             await _tokenService.AddRefreshTokenAsync(newRefreshToken);
