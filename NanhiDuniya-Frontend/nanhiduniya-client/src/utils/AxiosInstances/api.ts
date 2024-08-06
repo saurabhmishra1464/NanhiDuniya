@@ -3,7 +3,7 @@ import https from 'https';
 import { getSession } from 'next-auth/react';
 
 // Create an HTTPS agent that ignores SSL certificate validation
-const agent = new https.Agent({  
+const agent = new https.Agent({
   rejectUnauthorized: false
 });
 
@@ -24,10 +24,14 @@ const axiosInstance = axios.create({
 // Axios request interceptor
 axiosInstance.interceptors.request.use(
   async (config) => {
+    debugger
     // Retrieve user information from local storage
     const session = await getSession();
-const token = session?.user.token;
-   
+    // if(!session){
+    //   throw new Error('Session not found');
+    // }
+    const token = session?.user.token;
+
     // Add Authorization header if the user has an access token
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
@@ -65,40 +69,4 @@ const token = session?.user.token;
 
 export default axiosInstance;
 
-
-// // Centralized error handler
-// const handleErrorResponse = (error: AxiosError<any>) => {
-//     
-//   if (error.response) {
-//     // The request was made and the server responded with a status code
-//     console.error('Response error (User Management API):', error.response);
-//     const errorMessage = error.response.data.message || 'An error occurred.';
-//     return Promise.reject(new Error(errorMessage));
-//   } else if (error.request) {
-//     // The request was made but no response was received
-//     console.error('No response received (User Management API):', error.request);
-//     return Promise.reject(new Error('Network error. Please try again later.'));
-//   } else {
-//     // Something happened in setting up the request that triggered an error
-//     console.error('Error (User Management API):', error.message);
-//     return Promise.reject(new Error('Unexpected error occurred.'));
-//   }
-// };
-
-// Add a response interceptor for axiosInstanceUserManagement
-// axiosInstanceUserManagement.interceptors.response.use(
-//   response => response,
-//   (error: AxiosError<any>) => handleErrorResponse(error)
-// );
-
-
-// Axios instance for another microservice
-// const axiosInstanceB = axios.create({
-//   baseURL: 'https://microservice-b-url/api',
-//   timeout: 5000,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-
-export { axiosInstance};
+export { axiosInstance };

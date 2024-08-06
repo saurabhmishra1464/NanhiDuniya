@@ -8,6 +8,7 @@ let lastRefreshTime = 0;
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
+    maxAge: 15 * 24 * 60 * 60,
   },
   providers: [
     CredentialsProvider({
@@ -51,31 +52,20 @@ export const authOptions: NextAuthOptions = {
         token.token = user.token;
         token.refreshToken = user.refreshToken;
       }
-      if (Date.now() > new Date(token.expiresAt).getTime() && Date.now() - lastRefreshTime > 60000) {
+
+      if (Date.now() > new Date(token.expiresAt).getTime()- 30 * 1000) {
         lastRefreshTime = Date.now();
         const refreshedToken = await refreshAccessToken(token);
         if (refreshedToken) {
           token = refreshedToken;
         }
       }
-
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user._id = token._id;
-        session.user.token = token.token;
-        session.user.refreshToken = token.refreshToken;
-        if (token.error) {
-          session.Error = {
-            statusCode: token.error.statusCode,
-            message: token.error.message
-
-          };
-        }
-        //         Server-Side Token Storage: Store access tokens on the server side, ideally in a secure database or encrypted storage.
-        // Token Issuance: When a user authenticates, issue a session ID or a similar token that can be safely stored on the client side (e.g., in a cookie or local storage).
-        // Token Retrieval: On each request, the client sends the session ID or token to the server. The server then retrieves the corresponding access token from its secure storage and uses it for authorization.
+         session.user.token = token.token;
       }
       return session;
     },

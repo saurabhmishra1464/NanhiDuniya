@@ -4,7 +4,6 @@ import { JWT } from "next-auth/jwt";
 
 export function hasTokenExpired(token: JWT | null): boolean {
   if (!token) {
-    
     return true;
   }
 
@@ -14,7 +13,7 @@ export function hasTokenExpired(token: JWT | null): boolean {
     // If there's no expiration time, assume the token is not expired
     return false;
   }
-
+  const isExpired = currentTime >= expirationTime;
   // Compare the current time with the expiration time
   return currentTime >= expirationTime;
 }

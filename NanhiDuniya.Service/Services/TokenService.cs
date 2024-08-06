@@ -46,16 +46,7 @@ namespace NanhiDuniya.Service.Services
         #endregion
         public async Task<string> GenerateRefreshToken()
         {
-            var refreshToken = GenerateRandomString(); // Replace with your random token generation logic
-            //var httpContext = _httpContextAccessor.HttpContext;
-            //var cookieOptions = new CookieOptions
-            //{
-            //    HttpOnly = true,
-            //    Path = "/",
-            //    Secure = true, // Set to true in production
-            //    SameSite = SameSiteMode.Strict
-            //};
-            //httpContext.Response.Cookies.Append("refreshtoken", refreshToken, cookieOptions);
+            var refreshToken = GenerateRandomString();
             
             return refreshToken;
         }
@@ -98,7 +89,7 @@ namespace NanhiDuniya.Service.Services
                 issuer: _jwtService.Issuer,
                 audience: _jwtService.Audience,
                 claims: claims,
-                expires: DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiryMinutes)),
+                expires: DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)),
                 signingCredentials: credentials
                 );
 
