@@ -1,7 +1,6 @@
 "use server";
 
 export async function downloadCourse(formData:any) {
-  console.log("downloading course");
 
   const courseId = formData.get('courseId');
 
