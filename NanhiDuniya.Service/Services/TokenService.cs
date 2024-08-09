@@ -128,20 +128,17 @@ namespace NanhiDuniya.Service.Services
         }
         public async Task RevokeRefreshToken(string userId)
         {
-            var existingRefreshTokens = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
-            if (existingRefreshTokens == null || existingRefreshTokens.Count == 0)
+            var tokensToRevoke = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
+            if (tokensToRevoke == null || tokensToRevoke.Count == 0)
             {
-                throw new KeyNotFoundException();
+                throw new KeyNotFoundException($"No refresh tokens found for user");
             }
-            foreach (var token in existingRefreshTokens)
+
+            foreach (var token in tokensToRevoke)
             {
-                if (token.IsRevoked == false)
-                {
                     token.IsRevoked = true;
-                    await _tokenRepository.UpdateRefreshTokenAsync(token);
-            
-                }
             }
+            await _tokenRepository.UpdateRefreshTokenAsync(tokensToRevoke);
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)

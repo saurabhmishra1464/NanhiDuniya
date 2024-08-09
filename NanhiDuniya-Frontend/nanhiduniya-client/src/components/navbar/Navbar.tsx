@@ -5,33 +5,27 @@ import React, { useState } from 'react';
 import { UserCircleIcon, Cog6ToothIcon, QuestionMarkCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { signOut, useSession } from 'next-auth/react';
 import axiosInstance from '@/utils/AxiosInstances/api';
+import { handleError } from '@/utils/ErrorHandelling/errorHandler';
+import LogoutModal from '../modals/LogoutModal';
+import { toast } from 'react-toastify';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const { data: session, status } = useSession({ required: true });
-  const userId = session?.user?._id; 
-  if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
-  if (!session) {
-    return <div>You are not logged in.</div>;
-  }
-  
   const handleClick = () => {
     setIsOpen(!isOpen);
   }
 
-  const logOut = async () => {
-    debugger
-    try {
-      const userId = session?.user?._id; 
-      const token = session?.user?.token; 
-      await axiosInstance.post('/api/Account/RevokeRefreshToken', { userId });
-      await signOut({ callbackUrl: '/auth/login' });
-    } catch (error) {
-      console.error('Logout failed', error);
-    }
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  }
+  const handleModalClose = () => {
+    setIsLogoutModalOpen(false);
+  };
+
+  const handleLogoutError = (errorMessage: string) => {
+    toast.error(errorMessage);
   }
 
   return (
@@ -69,7 +63,7 @@ export default function Navbar() {
               </li>
               <li className="flex items-center text-white text-sm hover:bg-gray-700 pl-6">
                 <XMarkIcon className="w-5 h-5 mr-3 text-gray-400" />
-                <button onClick={logOut} className="block px-4 py-2">
+                <button onClick={handleLogoutClick} className="block px-4 py-2">
                   Logout
                 </button>
               </li>
@@ -77,6 +71,8 @@ export default function Navbar() {
           )}
         </div>
       </div>
+      <LogoutModal isOpen={isLogoutModalOpen} onClose={handleModalClose} onError={handleLogoutError} />
     </nav>
+
   );
 }

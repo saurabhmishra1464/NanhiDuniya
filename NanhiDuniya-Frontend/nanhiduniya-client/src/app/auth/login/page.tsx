@@ -1,9 +1,4 @@
-'use client';
 import LoginForm from '@/components/forms/LoginForm';
-import { toast } from '@/components/Shared/ToastMessage/ToastContainer';
-import { signIn } from "next-auth/react";
-import { FieldValues, useForm } from 'react-hook-form';
-import router, { useRouter } from 'next/navigation';
 
 const LoginPage = () => {
   return (

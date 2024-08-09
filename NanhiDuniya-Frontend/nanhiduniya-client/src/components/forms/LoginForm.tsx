@@ -35,7 +35,7 @@ const LoginForm = () => {
         redirect: false,
       });
       if (response?.ok) {
-        toast.success("You are now signed in!");
+        // toast.success("You are now signed in!");
         router.push("/admin/dashboard");
       }
       if (!response?.ok) {
