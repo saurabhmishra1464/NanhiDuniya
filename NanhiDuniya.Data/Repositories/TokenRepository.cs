@@ -24,7 +24,7 @@ namespace NanhiDuniya.Data.Repositories
 
         public async Task<List<UserRefreshToken>> GetListOfRefreshTokensByUserIdAsync(string userId)
         {
-            return await _dbcontext.UserRefreshTokens.Where(rt => rt.UserId == userId).ToListAsync();
+            return await _dbcontext.UserRefreshTokens.Where(rt => rt.UserId == userId && !rt.IsRevoked).ToListAsync();
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)
@@ -39,9 +39,9 @@ namespace NanhiDuniya.Data.Repositories
             _dbcontext.UserRefreshTokens.Remove(refreshToken);
             await _dbcontext.SaveChangesAsync();
         }
-        public async Task UpdateRefreshTokenAsync(UserRefreshToken refreshToken)
+        public async Task UpdateRefreshTokenAsync(List<UserRefreshToken> refreshToken)
         {
-            _dbcontext.Entry(refreshToken).State = EntityState.Modified;
+            _dbcontext.UserRefreshTokens.UpdateRange(refreshToken);
             await _dbcontext.SaveChangesAsync();
         }
     }

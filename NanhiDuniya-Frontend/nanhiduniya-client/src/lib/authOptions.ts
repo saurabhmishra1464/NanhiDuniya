@@ -73,14 +73,6 @@ export const authOptions: NextAuthOptions = {
     signIn: '/auth/login',
   },
   events: {
-    async signOut({ session, token }) {
-      try {
-        await axiosInstance.post('/api/Account/revoke-refresh-token');
-        await signOut({ callbackUrl: '/auth/login' });
-      } catch (error) {
-
-      }
-    },
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
