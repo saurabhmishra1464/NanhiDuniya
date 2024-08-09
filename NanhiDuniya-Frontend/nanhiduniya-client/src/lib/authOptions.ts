@@ -38,7 +38,6 @@ export const authOptions: NextAuthOptions = {
             throw new Error(response.data.message || 'Authentication failed');
           }
         } catch (error) {
-          console.error('Error during authentication:', error);
           throw new Error('Authentication failed. Please try again.');
         }
       },
@@ -79,7 +78,7 @@ export const authOptions: NextAuthOptions = {
         await axiosInstance.post('/api/Account/revoke-refresh-token');
         await signOut({ callbackUrl: '/auth/login' });
       } catch (error) {
-        console.error('Error during logout:', error);
+
       }
     },
   },

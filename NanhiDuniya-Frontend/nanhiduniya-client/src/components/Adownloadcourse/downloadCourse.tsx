@@ -4,7 +4,7 @@ import { downloadCourse } from "../../app/actions/course";
 
 export const DownloadCourse = () => {
   return (
-    <form action={downloadCourse}>
+    <form onSubmit={downloadCourse}>
       <button type="submit" className="bg-black text-white p-1 rounded">
         Download
       </button>

@@ -5,6 +5,7 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import { SessionProvider } from "next-auth/react";
 import AuthProvider from "@/context/AuthProvider";
+import { ToastContainer } from "react-toastify";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
       <AuthProvider>
           {children}
+          <ToastContainer /> 
         </AuthProvider>
         </body>
     </html>
