@@ -1,7 +1,6 @@
-'use client'
+'use client';
 
 import { useEffect, useState } from 'react'
-import {ErrorDisplay} from '../../../components/error-display'
 type ErrorProps ={
   error: Error
   reset: () => void
@@ -15,7 +14,7 @@ export default function Error({ error, reset }: ErrorProps) {
   }, [error])
   return(
 <>
-  <ErrorDisplay message={error.message} reset={reset}/>
+  
   </>
   )
 }

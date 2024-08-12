@@ -27,9 +27,6 @@ axiosInstance.interceptors.request.use(
     debugger
     // Retrieve user information from local storage
     const session = await getSession();
-    // if(!session){
-    //   throw new Error('Session not found');
-    // }
     const token = session?.user.token;
 
     // Add Authorization header if the user has an access token

@@ -1,16 +1,13 @@
 import React from 'react'
-import Navbar from '@/components/navbar/Navbar';
-import Sidebar from '@/components/sidebar/Sidebar';
+import DefaultLayout from '@/components/Layouts/DefaultLayout';
+import ECommerce from '@/components/Dashboard/E-commerce';
 
 const AdminDashBoardPage = () => {
-
   return (
-    <div>
-      <Sidebar />
+    <DefaultLayout>
+    <ECommerce />
+  </DefaultLayout>
 
-      <Navbar />
-
-    </div>
   )
 }
 

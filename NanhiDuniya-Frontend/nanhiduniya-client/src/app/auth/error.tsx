@@ -1,17 +1,13 @@
+"use client"
 
-'use client';
-import { useRouter } from 'next/router';
+export type ErrorProps= {
+    message: string;
+}
 
-const ErrorPage = () => {
-  const router = useRouter();
-  const { error } = router.query;
-
+export default function LoginError({ message }: ErrorProps){
   return (
-    <div>
-      <h1>Error</h1>
-      <p>{error ? decodeURIComponent(error as string) : 'An unknown error occurred'}</p>
+    <div className="text-red text-md mt-1">
+      <h2>{message}</h2>
     </div>
   );
 };
-
-export default ErrorPage;

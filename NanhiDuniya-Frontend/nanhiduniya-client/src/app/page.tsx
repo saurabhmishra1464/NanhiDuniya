@@ -1,6 +1,3 @@
-// src/app/page.tsx
-// Add this at the top of your component file
-
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
