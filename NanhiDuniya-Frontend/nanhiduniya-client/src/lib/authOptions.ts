@@ -1,8 +1,6 @@
 import NextAuth, { NextAuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { axiosInstance } from '@/utils/AxiosInstances/api';
-import { signOut } from 'next-auth/react';
-import { JWT } from 'next-auth/jwt';
+import  axiosInstance  from '@/utils/AxiosInstances/api';
 
 let lastRefreshTime = 0;
 export const authOptions: NextAuthOptions = {
