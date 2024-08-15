@@ -71,7 +71,7 @@ const DropdownMessage = () => {
                   href="/messages"
                 >
                   <div className="h-12.5 w-12.5 rounded-full">
-                    <Image
+                    {/* <Image
                       width={112}
                       height={112}
                       src={"/images/user/user-02.png"}
@@ -80,12 +80,12 @@ const DropdownMessage = () => {
                         width: "auto",
                         height: "auto",
                       }}
-                    />
+                    /> */}
                   </div>
 
                   <div>
                     <h6 className="text-sm font-medium text-black dark:text-white">
-                      Mariya Desoja
+                      Vipul Mishra
                     </h6>
                     <p className="text-sm">I like your confidence 💪</p>
                     <p className="text-xs">2min ago</p>
@@ -98,7 +98,7 @@ const DropdownMessage = () => {
                   href="/messages"
                 >
                   <div className="h-12.5 w-12.5 rounded-full">
-                    <Image
+                    {/* <Image
                       width={112}
                       height={112}
                       src={"/images/user/user-01.png"}
@@ -107,12 +107,12 @@ const DropdownMessage = () => {
                         width: "auto",
                         height: "auto",
                       }}
-                    />
+                    /> */}
                   </div>
 
                   <div>
                     <h6 className="text-sm font-medium text-black dark:text-white">
-                      Robert Jhon
+                      Ashutosh Mishra
                     </h6>
                     <p className="text-sm">Can you share your offer?</p>
                     <p className="text-xs">10min ago</p>
@@ -125,7 +125,7 @@ const DropdownMessage = () => {
                   href="/messages"
                 >
                   <div className="h-12.5 w-12.5 rounded-full">
-                    <Image
+                    {/* <Image
                       width={112}
                       height={112}
                       src={"/images/user/user-03.png"}
@@ -134,12 +134,12 @@ const DropdownMessage = () => {
                         width: "auto",
                         height: "auto",
                       }}
-                    />
+                    /> */}
                   </div>
 
                   <div>
                     <h6 className="text-sm font-medium text-black dark:text-white">
-                      Henry Dholi
+                      Shivam Mishra
                     </h6>
                     <p className="text-sm">I cam across your profile and...</p>
                     <p className="text-xs">1day ago</p>
@@ -152,7 +152,7 @@ const DropdownMessage = () => {
                   href="/messages"
                 >
                   <div className="h-12.5 w-12.5 rounded-full">
-                    <Image
+                    {/* <Image
                       width={112}
                       height={112}
                       src={"/images/user/user-04.png"}
@@ -161,12 +161,12 @@ const DropdownMessage = () => {
                         width: "auto",
                         height: "auto",
                       }}
-                    />
+                    /> */}
                   </div>
 
                   <div>
                     <h6 className="text-sm font-medium text-black dark:text-white">
-                      Cody Fisher
+                      Pratap Pathak
                     </h6>
                     <p className="text-sm">I’m waiting for you response!</p>
                     <p className="text-xs">5days ago</p>
@@ -179,7 +179,7 @@ const DropdownMessage = () => {
                   href="/messages"
                 >
                   <div className="h-12.5 w-12.5 rounded-full">
-                    <Image
+                    {/* <Image
                       width={112}
                       height={112}
                       src={"/images/user/user-02.png"}
@@ -188,12 +188,12 @@ const DropdownMessage = () => {
                         width: "auto",
                         height: "auto",
                       }}
-                    />
+                    /> */}
                   </div>
 
                   <div>
                     <h6 className="text-sm font-medium text-black dark:text-white">
-                      Mariya Desoja
+                      Sanu Kumar
                     </h6>
                     <p className="text-sm">I like your confidence 💪</p>
                     <p className="text-xs">2min ago</p>

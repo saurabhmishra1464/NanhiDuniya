@@ -27,21 +27,16 @@ namespace NanhiDuniya.Service.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TokenService> _logger;
         private readonly ITokenRepository _tokenRepository;
-        //private readonly IHttpContextAccessor _httpContextAccessor;
         public TokenService(
             UserManager<ApplicationUser> userManager,
             IOptions<JWTService> options,
             ILogger<TokenService> logger,
-            ITokenRepository tokenRepository
-            //IHttpContextAccessor httpContextAccessor
-
-            )
+            ITokenRepository tokenRepository)
         {
             _userManager = userManager;
             _logger = logger;
             _jwtService = options.Value;
             _tokenRepository = tokenRepository;
-            //_httpContextAccessor = httpContextAccessor;
         }
         #endregion
         public async Task<string> GenerateRefreshToken()

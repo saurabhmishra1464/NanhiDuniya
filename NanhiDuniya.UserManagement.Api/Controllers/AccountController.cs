@@ -15,6 +15,7 @@ using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Service.Services;
 using NanhiDuniya.UserManagement.Api.Extentions;
+using NanhiDuniya.UserManagement.Api.Middleware;
 using Newtonsoft.Json.Linq;
 using System.Runtime.Intrinsics.X86;
 
@@ -72,7 +73,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
+                throw new ArgumentException("Validation failed.");
             }
 
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
@@ -97,7 +98,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             if (result == null)
             {
                 _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
-                return Unauthorized();
+                throw new UnauthorizedAccessException("Invalid login credentials.");
             }
             _logger.LogInformation("User {Username} logged in successfully.", model.Email);
             return Ok(result);
@@ -118,8 +119,18 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("RevokeRefreshToken")]
         public async Task<IActionResult> RevokeRefreshToken([FromBody] RevokeRefreshTokenRequest revokeRefreshTokenRequest)
         {
-            await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
-           
+            if (!ModelState.IsValid)
+            {
+                throw new ArgumentException("Validation failed");
+            }
+            try
+            {
+                await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
+            }catch (Exception ex)
+            {
+                _logger.LogInformation("Failed to revoke refresh token.", ex);
+                throw new FailedToRevokeRefreshToken("Failed to revoke refresh token.", ex);
+            }
             return Ok();
         }
 
@@ -128,12 +139,12 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
+                throw new ArgumentException("Validation failed.");
             }
             var tokenValidationResult = await _accountService.ValidateResetToken(model.Token, model.Email);
             if (!tokenValidationResult.IsSuccess)
             {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, tokenValidationResult.Message));
+                throw new ArgumentException("The provided token is invalid. Please check and try again.");
             }
             var result = await _accountService.ResetPassword(model);
 
@@ -144,48 +155,32 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             }
 
             _logger.LogError("Password reset failed for user {Email}: {ErrorMessage}", model.Email, result.Message);
-            return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
+            throw new InvalidOperationException("Unable to complete the password reset due to a conflict.");
         }
 
-        //best approach for resetPassword
 
-//        Generate Token: Use GeneratePasswordResetTokenAsync to generate the token.
-//Create a Token Entity: Define a PasswordResetToken entity with properties like UserId, Token, CreatedOn, ExpiresOn, and Used.
+        #endregion
 
-//Store Token: Save the generated token and related information in the database.
+        #region Update User
 
-//Token Verification: When a user attempts to reset their password, retrieve the token from the database, verify its validity, and use ResetPasswordAsync to reset the password.
-
-//Token Invalidation: Mark the token as used or deleted after successful password reset.
-
-
-        //public async Task<bool> ResetPasswordAsync(string email, string token, string newPassword)
-        //{
-        //    var user = await _userManager.FindByEmailAsync(email);
-        //    if (user == null)
-        //    {
-        //        return false;
-        //        // Or handle error appropriately
-        //    }
-
-        //    var passwordResetToken = await _context.PasswordResetTokens
-        //        .FirstOrDefaultAsync(t => t.UserId == user.Id && t.Token == token && !t.Used && t.ExpiresOn > DateTime.UtcNow);
-
-        //    if (passwordResetToken == null)
-        //    {
-        //        return false; // Or handle error appropriately
-        //    }
-
-        //    var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
-        //    if (result.Succeeded)
-        //    {
-        //        passwordResetToken.Used = true;
-        //        await _context.SaveChangesAsync();
-        //    }
-
-        //    return result.Succeeded;
-        //}
-
+        [HttpPut("UpdateUser")]
+        public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)
+        {
+            if (!ModelState.IsValid)
+            {
+                throw new ArgumentException("Validation Failed");
+            }
+            try 
+            { 
+            var result = await _accountService.PutUserAsync(userInfo);
+             return Ok(result);
+            }
+            catch(Exception ex) 
+            {
+                throw new FailedToUpdate("Failed to Update user with id {userInfo.Id}", ex);
+            }
+        }
+        
         #endregion
     }
 

@@ -16,6 +16,6 @@ namespace NanhiDuniya.Core.Interfaces
         Task<ResultResponse> Register(RegisterModel model);
         Task<ResultResponse> ResetPassword(ResetPasswordDto resetPasswordDto);
         Task<ResultResponse> ValidateResetToken(string resetToken, string Email);
-
+        Task<ResultResponse> PutUserAsync(UserInfoDto userInfo);
     }
 }
