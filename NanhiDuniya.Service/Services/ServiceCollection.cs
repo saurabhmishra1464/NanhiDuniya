@@ -24,7 +24,6 @@ namespace NanhiDuniya.Service.Services
     {
         public static IServiceCollection DataServiceCollection(this IServiceCollection services, IConfiguration Configuration)
         {
-            
             // Register AutoMapper
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
             services.Configure<NanhiDuniyaServicesSettings>(Configuration.GetSection("NanhiDuniyaServices"));
@@ -37,6 +36,7 @@ namespace NanhiDuniya.Service.Services
             services.AddScoped<IEmailClientService, EmailClientService>();
             services.AddSingleton<IPasswordService, PasswordService>();
             services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IImageService, ImageService>();
             services.Configure<ApiBehaviorOptions>(o =>
             {
                 o.InvalidModelStateResponseFactory = actionContext =>

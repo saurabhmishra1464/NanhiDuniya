@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -35,19 +36,26 @@ namespace NanhiDuniya.Service.Services
         private readonly IMapper _mapper;
         private readonly IUserService _userService;
         private readonly ITokenService _tokenService;
+        private readonly IImageService _imageService;
         private readonly ILogger<AccountService> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JWTService _jwtService;
+        private readonly IWebHostEnvironment _env;
+        private readonly string _storagePath;
+
         public AccountService(NanhiDuniyaDbContext context,
             UserManager<ApplicationUser> userManager,
             IMapper mapper,
             RoleManager<IdentityRole> roleManager,
             IEmailClientService emailClient,
             IUserService userService,
+            IImageService imageService,
             ILogger<AccountService> logger,
             ITokenService tokenService,
             IOptions<JWTService> options,
-            IHttpContextAccessor httpContextAccessor
+            IHttpContextAccessor httpContextAccessor,
+            IConfiguration configuration,
+            IWebHostEnvironment env
             )
         {
             _userManager = userManager;
@@ -55,9 +63,12 @@ namespace NanhiDuniya.Service.Services
             _emailClient = emailClient;
             _mapper = mapper;
             _userService = userService;
+            _imageService = imageService;
             _tokenService = tokenService;
             _jwtService = options.Value;
             _httpContextAccessor = httpContextAccessor;
+            _env = env;
+            _storagePath = configuration["FileStoragePath"];
             this._logger = logger;
         }
         #endregion
@@ -170,6 +181,42 @@ namespace NanhiDuniya.Service.Services
             return response;
         }
 
+        #endregion
+
+        #region Update User
+        public async Task<ResultResponse> PutUserAsync(UserInfoDto userInfoDto)
+        {
+
+            ResultResponse resultResponse = new();
+            var user = await _userManager.FindByIdAsync(userInfoDto.Id.ToString());
+            
+            if(user is not null)
+            {
+                var uploadDirectory = Path.Combine(_storagePath);
+                var resultImage = await _imageService.SaveImageAsync(userInfoDto.ProfilePicture, uploadDirectory);
+
+                user.PhoneNumber = userInfoDto.PhoneNumber;
+                user.UserName = userInfoDto.UserName;
+                user.Email = userInfoDto.Email;
+                user.Bio = userInfoDto.Bio;
+                user.ProfilePictureUrl = resultImage;
+                
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    resultResponse.Message = "Successfully updated";
+                    resultResponse.IsSuccess = true;
+
+                }
+                else
+                {
+                    resultResponse.Message = "Something went wrong";
+                }
+                return resultResponse;
+            }
+            resultResponse.Message = "User doesn't exist";
+            return resultResponse;
+        }
         #endregion
 
         #region Helper methods

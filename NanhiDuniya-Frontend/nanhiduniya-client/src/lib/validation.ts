@@ -20,9 +20,9 @@ export const ResetPasswordFormValidation = z.object({
 
 export const LoginFormValidation = z.object({
     userName: z
-    .string()
-    .nonempty({ message: 'Email is required' })
-    .email({ message: 'Invalid email address' }),
+        .string()
+        .nonempty({ message: 'Email is required' })
+        .email({ message: 'Invalid email address' }),
 
     password: z
         .string()
@@ -32,6 +32,22 @@ export const LoginFormValidation = z.object({
         .regex(/[0-9]/, { message: "Password must contain at least one number" })
         .regex(/[@$!%*?&]/, { message: "Password must contain at least one special character" }),
 });
+
+export const PersonalInfoValidation = z.object({
+    fullName: z.string().min(2, "Full name must be at least 2 characters")
+        .max(50, "Full name must be at most 50 characters"),
+    email: z.string().email("Invalid email address"),
+    phoneNumber: z.string().transform((phone) => {
+        // Add +91 if it is not already present
+        if (!phone.startsWith('+91')) {
+          return `+91${phone}`;
+        }
+        return phone;
+      }).refine((phone) => /^\+\d{12,15}$/.test(phone), "Invalid phone number"),
+    
+    bio: z.string().optional(),
+
+})
 
 // export const UserFormValidation = z.object({
 //   name: z

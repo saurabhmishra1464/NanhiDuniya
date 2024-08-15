@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NanhiDuniya.Data.Entities;
 
@@ -11,9 +12,11 @@ using NanhiDuniya.Data.Entities;
 namespace NanhiDuniya.Data.Migrations
 {
     [DbContext(typeof(NanhiDuniyaDbContext))]
-    partial class NanhiDuniyaDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240814060829_adduserProfileFields")]
+    partial class adduserProfileFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

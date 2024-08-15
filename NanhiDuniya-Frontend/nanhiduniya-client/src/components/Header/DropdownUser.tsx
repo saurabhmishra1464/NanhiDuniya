@@ -11,18 +11,6 @@ import { ModalTypes } from "@/enums/modalTypes";
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { openModal } = useModal();
-  // const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-
-  // const handleLogoutClick = () => {
-  //   setIsLogoutModalOpen(true);
-  // }
-  // const handleModalClose = () => {
-  //   setIsLogoutModalOpen(false);
-  // };
-
-  // const handleLogoutError = (errorMessage: string) => {
-  //   toast.error(errorMessage);
-  // }
 
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
@@ -38,16 +26,13 @@ const DropdownUser = () => {
           <span className="block text-xs">Admin</span>
         </span>
 
-        <span className="h-12 w-12 rounded-full">
+        <span className="h-14 w-14 rounded-full">
           <Image
-            width={112}
-            height={112}
+            width={55}
+            height={55}
             src={"/images/profilePic.jpg"}
-            style={{
-              width: "auto",
-              height: "auto",
-            }}
             alt="User"
+            className="rounded-full h-full w-full"
           />
         </span>
 
