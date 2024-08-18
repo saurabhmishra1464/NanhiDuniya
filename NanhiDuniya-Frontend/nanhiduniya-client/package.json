@@ -33,7 +33,9 @@
     "react-apexcharts": "^1.4.1",
     "react-dom": "^18",
     "react-hot-toast": "^2.4.1",
+    "react-loading-skeleton": "^3.4.0",
     "react-toastify": "^10.0.5",
+    "swr": "^2.2.5",
     "tailwind-merge": "^2.4.0",
     "zod": "^3.23.8"
   },

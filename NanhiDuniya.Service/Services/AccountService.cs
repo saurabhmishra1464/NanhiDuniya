@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -76,7 +77,7 @@ namespace NanhiDuniya.Service.Services
         #region Authentication Token/Login
         public async Task<LoginResponse> Login(LoginModel loginDto)
         {
-           var user = await _userManager.FindByEmailAsync(loginDto.Email);
+            var user = await _userManager.FindByEmailAsync(loginDto.Email);
             bool isValidUser = await _userManager.CheckPasswordAsync(user, loginDto.Password);
 
             if (user == null || isValidUser == false)
@@ -91,7 +92,7 @@ namespace NanhiDuniya.Service.Services
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(token);
             var expiration = jwtSecurityToken.ValidTo;
-            var loginResponse= new LoginResponse
+            var loginResponse = new LoginResponse
             {
                 Token = token,
                 UserId = user.Id,
@@ -103,7 +104,7 @@ namespace NanhiDuniya.Service.Services
             return loginResponse;
         }
 
-        
+
         #endregion
 
         #region User Registration methods
@@ -111,7 +112,6 @@ namespace NanhiDuniya.Service.Services
         public async Task<ResultResponse> Register(RegisterModel model)
         {
             // Initialize a ResultResponse object to store the registration result.
-            var response = new ResultResponse();
             // Check if a user with the same email already exists.
             var userExists = await FindUserByEmail(model.Email);
 
@@ -120,13 +120,9 @@ namespace NanhiDuniya.Service.Services
             {
                 return new ResultResponse { Message = "User already exists!" };
             }
-
-            // Build a user entity from the registration model.
             var user = BuildUserFromRegistrationModel(model);
-
-            // Attempt to create the user asynchronously.
             var result = await CreateUserAsync(user, model.Password);
-            // If the user creation is successful, update the response accordingly.
+
             if (result.Succeeded)
             {
                 //Add User Roles
@@ -168,17 +164,19 @@ namespace NanhiDuniya.Service.Services
                 var resetLink = _userService.GeneratePasswordResetLink(new UserDto { Email = user.Email }, token);
                 _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, resetLink, null, null, "RegistrationSuccesful", user.Email);
 
+                return new ResultResponse
+                {
+                    IsSuccess = true,
+                    Message = "User registered successfully!"
+                };
 
-                response.IsSuccess = true;
-                response.Message = "User registered successfully!";
             }
-            else
+
+            return new ResultResponse
             {
-                // If user creation fails, build an error message from the result errors.
-                response.Message = BuildErrorMessage(result.Errors);
-            }
-            // Return the final response.
-            return response;
+                Message = BuildErrorMessage(result.Errors),
+                IsSuccess = false
+            };
         }
 
         #endregion
@@ -186,36 +184,67 @@ namespace NanhiDuniya.Service.Services
         #region Update User
         public async Task<ResultResponse> PutUserAsync(UserInfoDto userInfoDto)
         {
+            var user = await _userManager.FindByIdAsync(userInfoDto.Id);
 
-            ResultResponse resultResponse = new();
-            var user = await _userManager.FindByIdAsync(userInfoDto.Id.ToString());
-            
-            if(user is not null)
+            if (user == null)
             {
-                var uploadDirectory = Path.Combine(_storagePath);
-                var resultImage = await _imageService.SaveImageAsync(userInfoDto.ProfilePicture, uploadDirectory);
-
-                user.PhoneNumber = userInfoDto.PhoneNumber;
-                user.UserName = userInfoDto.UserName;
-                user.Email = userInfoDto.Email;
-                user.Bio = userInfoDto.Bio;
-                user.ProfilePictureUrl = resultImage;
-                
-                var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
+                _logger.LogError("User doesn't exist: {Id}", userInfoDto.Id);
+                return new ResultResponse
                 {
-                    resultResponse.Message = "Successfully updated";
-                    resultResponse.IsSuccess = true;
-
-                }
-                else
-                {
-                    resultResponse.Message = "Something went wrong";
-                }
-                return resultResponse;
+                    Message = "User doesn't exist",
+                    IsSuccess = false
+                };
             }
-            resultResponse.Message = "User doesn't exist";
-            return resultResponse;
+            //var uploadDirectory = Path.Combine(_storagePath);
+            //var resultImage = await _imageService.SaveImageAsync(userInfoDto.ProfilePicture, uploadDirectory);
+            var names = userInfoDto.FullName?.Split(' ') ?? new string[0];
+            if (names.Length > 0)
+            {
+                user.FirstName = names[0];
+                user.LastName = names.Length > 1 ? string.Join(" ", names.Skip(1)) : string.Empty;
+            }
+            user.PhoneNumber = userInfoDto.PhoneNumber;
+            user.Email = userInfoDto.Email;
+            user.Bio = userInfoDto.Bio;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (result.Succeeded)
+            {
+                _logger.LogInformation("User Info Updated SuccesFully: {Id}", userInfoDto.Id);
+                return new ResultResponse
+                {
+                    Message = "Successfully updated",
+                    IsSuccess = true
+                };
+
+            }
+
+            _logger.LogError("Error while updating the user personal info: {Id}", userInfoDto.Id, result);
+            return new ResultResponse
+            {
+                Message = "Something went wrong",
+                IsSuccess = false
+            };
+        }
+
+        public async Task<UserInfoDto> GetUser(string UserId)
+        {
+
+            var user = await _userManager.Users.Where(u => u.Id == UserId).Select(u => new UserInfoDto
+            {
+                Id = u.Id,
+                FullName = u.FirstName + " " + u.LastName,
+                PhoneNumber = u.PhoneNumber,
+                Email = u.Email,
+                Bio = u.Bio,
+                UserName = u.UserName,
+
+            }).FirstOrDefaultAsync();
+            if (user == null)
+            {
+                throw new KeyNotFoundException("User Not Found");
+            }
+            return user;
         }
         #endregion
 

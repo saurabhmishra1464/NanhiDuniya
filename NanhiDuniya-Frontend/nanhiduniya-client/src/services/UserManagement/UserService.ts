@@ -50,7 +50,6 @@ const resetPassword = async (resetPasswordData: ResetPassword): Promise<ApiRespo
 };
 
 const login = async (loginData: LoginDto) => {
-  debugger
   try {
     const response = await axiosInstance.post('/api/Account/Login', loginData);
     return response.data;

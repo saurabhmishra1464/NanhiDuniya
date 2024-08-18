@@ -11,7 +11,6 @@ interface ModalContextType {
 const ModalContext = createContext<ModalContextType | undefined>(undefined);
 
 export const ModalProvider = ({ children }: { children: ReactNode }) => {
-    debugger
   const [activeModal, setActiveModal] = useState<ModalTypes | null>(null);
 
   const openModal = (type: ModalTypes) => setActiveModal(type);

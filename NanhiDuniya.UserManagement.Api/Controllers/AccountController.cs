@@ -31,11 +31,13 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         private readonly ILogger<AccountController> _logger;
         private readonly IPasswordService _passwordService;
         private readonly ITokenService _tokenService;
-        public AccountController(IAccountService accountService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
+        private readonly IImageService _imageService;
+        public AccountController(IAccountService accountService, IImageService imageService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
         {
             _accountService = accountService;
             _passwordService = passwordService;
             _tokenService = tokenService;
+            _imageService = imageService;
             _mapper = mapper;
             _logger = logger;
         }
@@ -46,10 +48,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
-            }
 
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
 
@@ -60,7 +58,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             }
 
             _logger.LogError("Registration failed for user {Email}: {ErrorMessage}", model.Email, result.Message);
-            return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
+            throw new RegsitrationFailed("Registration Failed for user");
 
         }
         #endregion
@@ -71,10 +69,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("Register-Admin")]
         public async Task<IActionResult> RegisterAdmin([FromBody] RegistrationRequestDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new ArgumentException("Validation failed.");
-            }
 
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
 
@@ -84,8 +78,8 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
                 return Ok(new ApiResponse(StatusCodes.Status201Created, result.Message));
             }
 
-            _logger.LogError("Registration failed for user {Email}: {ErrorMessage}", model.Email, result.Message);
-            return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
+            _logger.LogError("Registration failed for admin {Email}: {ErrorMessage}", model.Email, result.Message);
+            throw new RegsitrationFailed("Registration Failed for admin");
         }
         #endregion
 
@@ -94,7 +88,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
         {
             var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-           
+
             if (result == null)
             {
                 _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
@@ -119,14 +113,11 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("RevokeRefreshToken")]
         public async Task<IActionResult> RevokeRefreshToken([FromBody] RevokeRefreshTokenRequest revokeRefreshTokenRequest)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new ArgumentException("Validation failed");
-            }
             try
             {
                 await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
-            }catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 _logger.LogInformation("Failed to revoke refresh token.", ex);
                 throw new FailedToRevokeRefreshToken("Failed to revoke refresh token.", ex);
@@ -137,10 +128,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new ArgumentException("Validation failed.");
-            }
             var tokenValidationResult = await _accountService.ValidateResetToken(model.Token, model.Email);
             if (!tokenValidationResult.IsSuccess)
             {
@@ -161,26 +148,51 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
 
         #endregion
 
+        #region GetUserProfile
+        [HttpGet("Users/{userId}")]
+        public async Task<IActionResult> GetUsers(string userId)
+        {
+            var user = await _accountService.GetUser(userId);
+
+            return Ok(user);
+
+        }
+
+        #endregion
+
         #region Update User
 
         [HttpPut("UpdateUser")]
         public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)
         {
-            if (!ModelState.IsValid)
+            try
             {
-                throw new ArgumentException("Validation Failed");
+                var result = await _accountService.PutUserAsync(userInfo);
+                return Ok(result);
             }
-            try 
-            { 
-            var result = await _accountService.PutUserAsync(userInfo);
-             return Ok(result);
-            }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 throw new FailedToUpdate("Failed to Update user with id {userInfo.Id}", ex);
             }
         }
-        
+
+        [HttpPost("UploadProfilePicture")]
+        public async Task<IActionResult> UploadProfilePicture(UploadProfilePictureDto upload)
+        {
+            if (upload.formFile == null || upload.formFile.Length == 0)
+            {
+                throw new ArgumentException("File is empty,Please attach Image.");
+            }
+            var result = await _imageService.SaveImageAsync(upload);
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Image Uploaded Successfully");
+                return Ok(new ApiResponse(StatusCodes.Status200OK, result.Message));
+            }
+            _logger.LogError("Image Upload failed for user {Id}: {ErrorMessage}"/*,upload.Id*/, result.Message);
+            throw new FailedToUpdate("Image Upload failed.");
+        }
+
         #endregion
     }
 

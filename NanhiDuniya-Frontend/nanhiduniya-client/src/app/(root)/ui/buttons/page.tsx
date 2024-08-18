@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { Metadata } from "next";
-import DefaultLayout from "@/components/Layouts/DefaultLayout";
 
 export const metadata: Metadata = {
   title: "Next.js Buttons | TailAdmin - Next.js Dashboard Template",
@@ -11,10 +10,10 @@ export const metadata: Metadata = {
 
 const Buttons = () => {
   return (
-    <DefaultLayout>
-      <Breadcrumb pageName="Buttons" />
+    // <DefaultLayout>
+    //   <Breadcrumb pageName="Buttons" />
 
-      {/* <!-- Normal Button Items --> */}
+      <div>
       <div className="mb-10 rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
           <h3 className="font-medium text-black dark:text-white">
@@ -115,7 +114,7 @@ const Buttons = () => {
         </div>
       </div>
 
-      {/* <!-- Button With Icon Items --> */}
+    
       <div className="mb-10 rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
         <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
           <h3 className="font-medium text-black dark:text-white">
@@ -471,7 +470,7 @@ const Buttons = () => {
           </div>
         </div>
       </div>
-    </DefaultLayout>
+      </div>
   );
 };
 

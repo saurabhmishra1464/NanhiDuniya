@@ -1,4 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
+using NanhiDuniya.Core.Models;
+using NanhiDuniya.Core.Resources.AccountDtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,7 @@ namespace NanhiDuniya.Core.Interfaces
 {
     public interface IImageService
     {
-        Task<string> SaveImageAsync(IFormFile image, string uploadDirectory);
+        Task<ResultResponse> SaveImageAsync(UploadProfilePictureDto uploadProfilePictureDto/*, string uploadDirectory*/);
 
     }
 }
