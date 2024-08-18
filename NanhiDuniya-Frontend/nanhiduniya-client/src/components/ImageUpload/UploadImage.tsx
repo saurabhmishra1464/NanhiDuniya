@@ -3,12 +3,30 @@
 import React from 'react'
 import Image from "next/image";
 import { FieldValues, useForm } from 'react-hook-form'
+import { useSession } from 'next-auth/react';
+import axiosInstance from '@/utils/AxiosInstances/api';
+import { toast } from 'react-toastify';
 const UploadImage = () => {
   const { register, handleSubmit, setValue, watch, formState: { errors }, } = useForm();
+  const session = useSession();
+  if(!session) return null;
   const onSubmit = async (data: FieldValues) => {
-    debugger
-    let te = data.file[0];
-    alert(data.file[0]);
+    try {
+      const formData = new FormData();
+      formData.append('formFile', data.file[0]);
+      formData.append('Id', session?.data?.user?._id);
+      const response = await axiosInstance.post('/api/Account/UploadProfilePicture', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      if (response?.status === 200) {
+        toast.success('Image Updated successfully');
+      }
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+
   }
   const handleDelete = () => {
     setValue('file', null)

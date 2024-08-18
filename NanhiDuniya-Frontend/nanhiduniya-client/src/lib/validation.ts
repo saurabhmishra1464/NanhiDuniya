@@ -43,7 +43,7 @@ export const PersonalInfoValidation = z.object({
           return `+91${phone}`;
         }
         return phone;
-      }).refine((phone) => /^\+\d{12,15}$/.test(phone), "Invalid phone number"),
+      }).refine((phone) => /^\+\d{12}$/.test(phone), "Invalid phone number"),
     
     bio: z.string().optional(),
 

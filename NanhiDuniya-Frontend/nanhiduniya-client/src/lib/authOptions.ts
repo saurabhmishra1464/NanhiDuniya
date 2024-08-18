@@ -1,6 +1,7 @@
 import NextAuth, { NextAuthOptions, User } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import  axiosInstance  from '@/utils/AxiosInstances/api';
+import eventEmitter from '@/utils/eventEmitter';
 
 let lastRefreshTime = 0;
 export const authOptions: NextAuthOptions = {
@@ -55,6 +56,8 @@ export const authOptions: NextAuthOptions = {
         const refreshedToken = await refreshAccessToken(token);
         if (refreshedToken) {
           token = refreshedToken;
+          // eventEmitter.emit('tokenRefreshed');
+          console.log('Token refreshed and event emitted');
         }
       }
       return token;
@@ -77,7 +80,6 @@ export const authOptions: NextAuthOptions = {
 };
 
 async function refreshAccessToken(token: any) {
-  debugger
   // try {
   const response = await axiosInstance.post('/api/Account/RefreshToken', {
     token: token.token,

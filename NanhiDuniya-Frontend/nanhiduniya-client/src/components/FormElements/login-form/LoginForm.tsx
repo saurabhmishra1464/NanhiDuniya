@@ -25,11 +25,9 @@ const SignIn: React.FC = () => {
   });
   const password = watch('password');
   const togglePasswordVisibility = () => {
-    debugger
     setShowPassword(!showPassword);
   };
   const onSubmit = async (data: FieldValues) => {
-    debugger
     setLoading(true);
 
     try {

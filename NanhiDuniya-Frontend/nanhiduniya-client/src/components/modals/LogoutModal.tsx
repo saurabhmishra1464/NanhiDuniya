@@ -12,11 +12,9 @@ type LogoutModalProps = {
 }
 // const LogoutModal = ({ isOpen, onClose, onError }: LogoutModalProps) => {
   const LogoutModal = ({ onClose }: LogoutModalProps) => {
-    debugger
     const { data: session, status } = useSession({ required: true });
     // if (!isOpen) return null;
     const logOut = async () => {
-        debugger
         try {
             const userId = session?.user?._id;
             await axiosInstance.post('/api/Account/RevokeRefreshToken', { userId });

@@ -67,6 +67,10 @@ namespace NanhiDuniya.UserManagement.APi.Middleware
                 case FailedToUpdate failedToUpdate:
                     statusCode = HttpStatusCode.BadRequest;  // Or another appropriate status code
                     errorMessage = failedToUpdate.Message;
+                    break; 
+                case RegsitrationFailed regsitrationFailed:
+                    statusCode = HttpStatusCode.BadRequest;  // Or another appropriate status code
+                    errorMessage = regsitrationFailed.Message;
                     break;
                 default:
                     statusCode = HttpStatusCode.InternalServerError;

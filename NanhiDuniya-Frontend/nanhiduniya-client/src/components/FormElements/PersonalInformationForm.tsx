@@ -1,19 +1,68 @@
 'use client'
 
+import useUser from '@/hooks/useUsers';
 import { PersonalInfoValidation } from '@/lib/validation';
+import axiosInstance from '@/utils/AxiosInstances/api';
 import { zodResolver } from '@hookform/resolvers/zod';
-import React from 'react'
+import { useSession } from 'next-auth/react';
+import React, { useEffect } from 'react'
 import { FieldValues, useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+import useSWR from 'swr';
 function PersonalInformationForm() {
-    const { register, handleSubmit, formState: { errors } } = useForm({
+    const { data: session, status } = useSession();
+
+    const userId = session?.user?._id;
+    const { register, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: zodResolver(PersonalInfoValidation),
     });
-    const onSubmit = async (data: FieldValues) => {
-        debugger
+    const { user, isLoading } = useUser(userId);
 
+    useEffect(() => {
+        if (user) {
+            setValue('fullName', user?.fullName);
+            setValue('phoneNumber', user.phoneNumber);
+            setValue('email', user.email);
+            setValue('bio', user.bio);
+            setValue('userName', user.userName);
+        }
+    }, [user, setValue]);
+    
+
+    const onSubmit = async (data: FieldValues) => {
+        try {
+            const payLoad = { ...data, Id: userId };
+            const response = await axiosInstance.put('/api/Account/UpdateUser', payLoad);
+            if (response?.status === 200) {
+                toast.success('Personal Information Updated successfully');
+            }
+        } catch (error: any) {
+            toast.error(error.message);
+        }
 
     }
-
+    if (isLoading) {
+        return (
+            <div className="col-span-5 xl:col-span-3">
+                <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+                    <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
+                        <h3 className="font-medium text-black dark:text-white">
+                            Personal Information
+                        </h3>
+                    </div>
+                    <div className="p-7">
+                        <Skeleton height={40} count={5} className="mb-5.5" />
+                        <Skeleton height={40} count={1} className="mb-5.5" />
+                        <Skeleton height={40} count={1} className="mb-5.5" />
+                        <Skeleton height={40} count={1} className="mb-5.5" />
+                        <Skeleton height={40} count={1} className="mb-5.5" />
+                    </div>
+                </div>
+            </div>
+        );
+    }
     return (
         <div className="col-span-5 xl:col-span-3">
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -64,7 +113,6 @@ function PersonalInformationForm() {
                                         {...register("fullName")}
 
                                         placeholder="Enter your full name"
-                                    //   defaultValue="Saurabh Mishra"
                                     />
                                 </div>
                                 {errors?.fullName && (<span className='text-red-500 text-sm mt-1'>{`${errors?.fullName?.message}`}</span>)}
@@ -82,7 +130,6 @@ function PersonalInformationForm() {
                                     type="text"
                                     {...register("phoneNumber")}
                                     placeholder="Enter your phone number"
-                                // defaultValue="+918825149794"
                                 />
                                 {errors?.phoneNumber && (<span className='text-red-500 text-sm mt-2 block'>{`${errors?.phoneNumber?.message}`}</span>)}
                             </div>
@@ -126,8 +173,6 @@ function PersonalInformationForm() {
                                     className="w-full rounded border border-stroke bg-gray py-3 pl-11.5 pr-4.5 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                                     type="email"
                                     {...register("email")}
-                                    placeholder="saurabhmishra@gmail.com"
-                                // defaultValue="saurabhmishra@gmail.com"
                                 />
                                 {errors?.email && (<span className='text-red-500 text-sm mt-2'>{`${errors?.email?.message}`}</span>)}
                             </div>
@@ -143,9 +188,8 @@ function PersonalInformationForm() {
                             <input
                                 className="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                                 type="text"
-                                placeholder="saurabhmishra1464@gmail.com"
-                                readOnly
-                            // defaultValue="sauranbh123"
+                                {...register("userName")}
+                                
                             />
                             {errors?.userName && (<span className='text-red-500 text-sm mt-2'>{`${errors?.userName?.message}`}</span>)}
                         </div>
@@ -194,7 +238,6 @@ function PersonalInformationForm() {
                                     {...register("bio")}
                                     rows={6}
                                     placeholder="Write your bio here"
-                                // defaultValue="Hello I am Saurabh Mishra a Software Developer, Who can develop Softwares"
                                 ></textarea>
                             </div>
                         </div>
