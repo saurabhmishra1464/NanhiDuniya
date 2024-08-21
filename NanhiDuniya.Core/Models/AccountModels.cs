@@ -31,7 +31,6 @@ namespace NanhiDuniya.Core.Models
         public string RefreshToken { get; set; }
         //public bool IsEmailConfirmed { get; set; }
         public DateTime ExpiresAt { get; set; }
-        public int ExpiresIn { get; set; }
     }
 
     public class RefreshTokenDto

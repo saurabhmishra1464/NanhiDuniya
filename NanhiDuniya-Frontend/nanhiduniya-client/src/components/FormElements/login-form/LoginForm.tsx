@@ -13,6 +13,7 @@ import { handleError } from "@/utils/ErrorHandelling/errorHandler";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from "@/context/AuthProvider";
 
 const SignIn: React.FC = () => {
 
@@ -20,6 +21,7 @@ const SignIn: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loginError, setLoginError] = useState("");
+  const { login } = useAuth();
   const { register, handleSubmit, watch, formState: { errors }, reset } = useForm({
     resolver: zodResolver(LoginFormValidation),
   });
@@ -28,40 +30,38 @@ const SignIn: React.FC = () => {
     setShowPassword(!showPassword);
   };
   const onSubmit = async (data: FieldValues) => {
-    setLoading(true);
-
-    try {
-      const response = await signIn("credentials", {
-        email: data.userName,
-        password: data.password,
-        redirect: false,
-      });
-      if (response?.ok) {
-        // toast.success("You are now signed in!");
-        router.push("/admin/dashboard");
-      } if (!response?.ok) {
-        const errorObject = {
-          name: "Error",
-          message: response?.error || 'An unexpected error occurred. Please try again.',
-          statusCode: response?.status ?? 0,
-        } as Error;
-        if (response?.status === 401) {
-          errorObject.message = 'Invalid email or password';
-        } else if (response?.status === 500) {
-          errorObject.message = 'Server error, please try again later';
-        }
-        const message = handleError(errorObject as Error);
-        setLoginError(message);
-        toast.error(message);
-        return;
-      }
-    } catch (error: any) {
-      const message = handleError(error as Error);
-      setLoginError(message);
-      toast.error(message);
-    } finally {
-      setLoading(false);
-    }
+    debugger
+    // setLoading(true);
+      await login(
+        data.userName,
+        data.password,
+      );
+    //   if (response?.ok) {
+    //      toast.success("You are now signed in!");
+    //     router.push("/admin/dashboard");
+    //   } if (!response?.ok) {
+    //     const errorObject = {
+    //       name: "Error",
+    //       message: response?.error || 'An unexpected error occurred. Please try again.',
+    //       statusCode: response?.status ?? 0,
+    //     } as Error;
+    //     if (response?.status === 401) {
+    //       errorObject.message = 'Invalid email or password';
+    //     } else if (response?.status === 500) {
+    //       errorObject.message = 'Server error, please try again later';
+    //     }
+    //     const message = handleError(errorObject as Error);
+    //     setLoginError(message);
+    //     toast.error(message);
+    //     return;
+    //   }
+    // } catch (error: any) {
+    //   const message = handleError(error as Error);
+    //   setLoginError(message);
+    //   toast.error(message);
+    // } finally {
+    //   setLoading(false);
+    // }
   }
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">

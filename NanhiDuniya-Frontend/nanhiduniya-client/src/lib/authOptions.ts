@@ -52,6 +52,7 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (Date.now() > new Date(token.expiresAt).getTime()- 30 * 1000) {
+        console.log('Token expired, refreshing...',token.expiresAt);
         lastRefreshTime = Date.now();
         const refreshedToken = await refreshAccessToken(token);
         if (refreshedToken) {

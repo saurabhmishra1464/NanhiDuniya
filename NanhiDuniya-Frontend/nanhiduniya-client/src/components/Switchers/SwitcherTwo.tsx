@@ -7,7 +7,7 @@ const SwitcherTwo = () => {
   return (
     <div x-data="{ switcherToggle: false }">
       <label
-        htmlFor="toggle2"
+      
         className="flex cursor-pointer select-none items-center"
       >
         <div className="relative">

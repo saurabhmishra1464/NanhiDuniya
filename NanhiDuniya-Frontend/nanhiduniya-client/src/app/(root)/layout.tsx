@@ -27,7 +27,6 @@ export default function RootLayout({
   // );
   
   return (
-    // <SessionCheck>
       <div className="flex">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
         <div className="relative flex flex-1 flex-col lg:ml-72.5">
@@ -41,6 +40,5 @@ export default function RootLayout({
           </main>
         </div>
       </div>
-    // </SessionCheck>
   );
 }
