@@ -7,7 +7,7 @@ const CheckboxTwo = () => {
   return (
     <div>
       <label
-        htmlFor="checkboxLabelTwo"
+       
         className="flex cursor-pointer select-none items-center"
       >
         <div className="relative">

@@ -3,5 +3,10 @@ import { useRouter } from 'next/navigation';
 
 export default function Home() {
 
-  return null; // Return null while redirecting
+  return (
+
+    <div>
+      <h1>Welcome Page</h1>
+    </div>
+  ); // Return null while redirecting
 }

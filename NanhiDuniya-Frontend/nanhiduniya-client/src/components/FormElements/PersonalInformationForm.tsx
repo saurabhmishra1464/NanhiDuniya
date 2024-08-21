@@ -12,12 +12,10 @@ import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import useSWR from 'swr';
 function PersonalInformationForm() {
-    const { data: session, status } = useSession();
-
-    const userId = session?.user?._id;
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: zodResolver(PersonalInfoValidation),
     });
+    const userId = "27133c5d-d9c3-45dd-b7b0-a16108ab11dc";
     const { user, isLoading } = useUser(userId);
 
     useEffect(() => {
@@ -77,7 +75,6 @@ function PersonalInformationForm() {
                             <div className="w-full sm:w-1/2">
                                 <label
                                     className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    htmlFor="fullName"
                                 >
                                     Full Name
                                 </label>
@@ -121,7 +118,7 @@ function PersonalInformationForm() {
                             <div className="w-full sm:w-1/2">
                                 <label
                                     className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                    htmlFor="phoneNumber"
+                                
                                 >
                                     Phone Number
                                 </label>
@@ -139,7 +136,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                htmlFor="emailAddress"
+                            
                             >
                                 Email Address
                             </label>
@@ -181,7 +178,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                htmlFor="Username"
+                               
                             >
                                 Username
                             </label>
@@ -197,7 +194,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                htmlFor="Username"
+                        
                             >
                                 BIO
                             </label>

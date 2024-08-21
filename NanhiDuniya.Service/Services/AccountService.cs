@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Azure.Core;
+using Azure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -101,6 +103,25 @@ namespace NanhiDuniya.Service.Services
             };
             var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
             await _tokenService.AddRefreshTokenAsync(newRefreshToken);
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("accessToken", token,
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(10),
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax
+                });
+
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("refreshToken", refreshToken,
+                new CookieOptions
+                {
+                    Expires = DateTimeOffset.UtcNow.AddDays(15),
+                    HttpOnly = true,
+                    Secure = true,
+                    SameSite = SameSiteMode.Lax
+                });
+
             return loginResponse;
         }
 

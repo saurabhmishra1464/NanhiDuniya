@@ -126,7 +126,7 @@ const FormLayout = () => {
                 </div>
 
                 <div className="mb-5.5 mt-5 flex items-center justify-between">
-                  <label htmlFor="formCheckbox" className="flex cursor-pointer">
+                  <label className="flex cursor-pointer">
                     <div className="relative pt-0.5">
                       <input
                         type="checkbox"

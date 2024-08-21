@@ -29,7 +29,6 @@ const Profile = () => {
             />
             <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
               <label
-                htmlFor="cover"
                 className="flex cursor-pointer items-center justify-center gap-2 rounded bg-primary px-2 py-1 text-sm font-medium text-white hover:bg-opacity-80 xsm:px-4"
               >
                 <input
@@ -79,7 +78,7 @@ const Profile = () => {
                   alt="profile"
                 />
                 <label
-                  htmlFor="profile"
+                 
                   className="absolute bottom-0 right-0 flex h-8.5 w-8.5 cursor-pointer items-center justify-center rounded-full bg-primary text-white hover:bg-opacity-90 sm:bottom-2 sm:right-2"
                 >
                   <svg

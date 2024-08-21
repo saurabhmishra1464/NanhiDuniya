@@ -1,14 +1,13 @@
 // utils/HasTokenExpired.ts
 
-import { JWT } from "next-auth/jwt";
-
-export function hasTokenExpired(token: JWT | null): boolean {
+import jwt from 'jsonwebtoken';
+export function hasTokenExpired(token: string | null): boolean {
   if (!token) {
     return true;
   }
-
+  const decodedToken: any = jwt.decode(token);
   const currentTime = Math.floor(Date.now() / 1000);
-  const expirationTime = token.exp as number | undefined;
+  const expirationTime = decodedToken.exp as number | undefined;
   if (!expirationTime) {
     // If there's no expiration time, assume the token is not expired
     return false;
