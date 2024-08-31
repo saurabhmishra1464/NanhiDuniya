@@ -12,6 +12,7 @@ using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Data.Entities;
+using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
@@ -27,22 +28,26 @@ namespace NanhiDuniya.Service.Services
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly ILogger<TokenService> _logger;
         private readonly ITokenRepository _tokenRepository;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         public TokenService(
             UserManager<ApplicationUser> userManager,
             IOptions<JWTService> options,
             ILogger<TokenService> logger,
-            ITokenRepository tokenRepository)
+            ITokenRepository tokenRepository,
+            IHttpContextAccessor httpContextAccessor
+            )
         {
             _userManager = userManager;
             _logger = logger;
             _jwtService = options.Value;
+            _httpContextAccessor = httpContextAccessor;
             _tokenRepository = tokenRepository;
         }
         #endregion
         public async Task<string> GenerateRefreshToken()
         {
             var refreshToken = GenerateRandomString();
-            
+
             return refreshToken;
         }
         private string GenerateRandomString()
@@ -91,33 +96,44 @@ namespace NanhiDuniya.Service.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<RefreshTokenResponse> VerifyRefreshToken(RefreshTokenDto request)
+        public async Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken)
         {
+            
+            //var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
+            //var userId = tokenContent.Claims.ToList().FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Sub)?.Value;
+
+            //_logger.LogError("Verifying refresh token for user ID: {UserId}", userId);
+            //var user = await FindUserById(userId);
+            if (string.IsNullOrEmpty(refreshToken))
+                throw new UnauthorizedAccessException();
+
+            var storedToken = await _tokenRepository.GetRefreshTokenAsync(refreshToken);
+            if (storedToken == null || storedToken.RefreshToken != refreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
+            {
+                throw new UnauthorizedAccessException();
+            }
+            var accessToken = await GenerateAccessToken(storedToken.UserId);
             var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
-            var userId = tokenContent.Claims.ToList().FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Sub)?.Value;
-
-            _logger.LogError("Verifying refresh token for user ID: {UserId}", userId);
-            var user = await FindUserById(userId);
-
-            if (user == null || !user.IsActive)
-            {
-                _logger.LogWarning("Invalid user or access denied");
-                throw new UnauthorizedAccessException();
-            }
-
-            var storedToken = await _tokenRepository.GetRefreshTokenAsync(userId, request.RefreshToken);
-            if (storedToken == null || storedToken.RefreshToken != request.RefreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
-            {
-                throw new UnauthorizedAccessException();
-            }
-            var accessToken = await GenerateAccessToken(user.Id);
             var newtokenContent = jwtSecurityTokenHandler.ReadJwtToken(accessToken);
             var expiration = newtokenContent.ValidTo;
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("accessToken", accessToken,
+                new CookieOptions
+                {
+                    //Expires = DateTimeOffset.UtcNow.AddMinutes(10),
+                    //IsEssential = true,
+                    //HttpOnly = true,
+                    //Expires = DateTime.UtcNow.AddDays(1),
+                    //SameSite = SameSiteMode.None,
+                    //Secure = true
+                    HttpOnly = true,
+                    Expires = DateTimeOffset.UtcNow.AddMinutes(3),
+                    IsEssential = true,
+                    SameSite = SameSiteMode.None,
+                    Secure = true,
+                });
             return new RefreshTokenResponse
             {
                 Token = accessToken,
-                RefreshToken = storedToken.RefreshToken,
                 ExpiresAt = expiration
             };
         }
@@ -131,7 +147,7 @@ namespace NanhiDuniya.Service.Services
 
             foreach (var token in tokensToRevoke)
             {
-                    token.IsRevoked = true;
+                token.IsRevoked = true;
             }
             await _tokenRepository.UpdateRefreshTokenAsync(tokensToRevoke);
         }
@@ -151,6 +167,22 @@ namespace NanhiDuniya.Service.Services
         {
             // Logic to find a user by email using the user manager
             return await _userManager.FindByIdAsync(userId!);
+        }
+
+        public static bool HasTokenExpired(string token)
+        {
+            if (string.IsNullOrEmpty(token))
+            {
+                return true;
+            }
+
+            var jwtToken = new JwtSecurityTokenHandler();
+            var decodedToken = jwtToken.ReadJwtToken(token);
+            var currentTime = DateTime.UtcNow;
+            var expirationTime = decodedToken.ValidTo;
+
+            // Check if the token has expired
+            return expirationTime < currentTime;
         }
     }
 }

@@ -18,6 +18,7 @@ using NanhiDuniya.UserManagement.Api.Extentions;
 using NanhiDuniya.UserManagement.Api.Middleware;
 using Newtonsoft.Json.Linq;
 using System.Runtime.Intrinsics.X86;
+using System.Security.Claims;
 
 namespace NanhiDuniya.UserManagement.Api.Controllers
 {
@@ -99,9 +100,10 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         }
 
         [HttpPost("RefreshToken")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto request)
+        public async Task<IActionResult> RefreshToken()
         {
-            var response = await _tokenService.VerifyRefreshToken(request);
+            var refreshToken = Request.Cookies["refreshToken"];
+            var response = await _tokenService.VerifyRefreshToken(refreshToken);
             if (response == null)
             {
                 throw new UnauthorizedAccessException();
@@ -109,6 +111,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
 
             return Ok(response);
         }
+
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("RevokeRefreshToken")]
         public async Task<IActionResult> RevokeRefreshToken([FromBody] RevokeRefreshTokenRequest revokeRefreshTokenRequest)
@@ -149,10 +152,12 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         #endregion
 
         #region GetUserProfile
-        [HttpGet("Users/{userId}")]
-        public async Task<IActionResult> GetUsers(string userId)
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetUser()
         {
-            var user = await _accountService.GetUser(userId);
+            var accessToken = Request.Cookies["accessToken"];
+            var user = await _accountService.GetUser(accessToken);
 
             return Ok(user);
 

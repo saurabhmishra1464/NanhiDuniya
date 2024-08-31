@@ -27,6 +27,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using Newtonsoft.Json.Linq;
 
 namespace NanhiDuniya.Service.Services
 {
@@ -41,9 +42,9 @@ namespace NanhiDuniya.Service.Services
         private readonly ITokenService _tokenService;
         private readonly IImageService _imageService;
         private readonly ILogger<AccountService> _logger;
-        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly JWTService _jwtService;
         private readonly IWebHostEnvironment _env;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly string _storagePath;
 
         public AccountService(NanhiDuniyaDbContext context,
@@ -61,6 +62,7 @@ namespace NanhiDuniya.Service.Services
             IWebHostEnvironment env
             )
         {
+            _httpContextAccessor= httpContextAccessor;
             _userManager = userManager;
             _roleManager = roleManager;
             _emailClient = emailClient;
@@ -69,7 +71,6 @@ namespace NanhiDuniya.Service.Services
             _imageService = imageService;
             _tokenService = tokenService;
             _jwtService = options.Value;
-            _httpContextAccessor = httpContextAccessor;
             _env = env;
             _storagePath = configuration["FileStoragePath"];
             this._logger = logger;
@@ -103,24 +104,39 @@ namespace NanhiDuniya.Service.Services
             };
             var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
             await _tokenService.AddRefreshTokenAsync(newRefreshToken);
-
             _httpContextAccessor.HttpContext.Response.Cookies.Append("accessToken", token,
                 new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(10),
+                    //Expires = DateTimeOffset.UtcNow.AddMinutes(10),
+                    //IsEssential = true,
+                    //HttpOnly = true,
+                    //Expires = DateTime.UtcNow.AddDays(1),
+                    //SameSite = SameSiteMode.None,
+                    //Secure = true
+
                     HttpOnly = true,
+                    Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)),
+                    IsEssential = true,
+                    SameSite = SameSiteMode.None,
                     Secure = true,
-                    SameSite = SameSiteMode.Lax
                 });
 
             _httpContextAccessor.HttpContext.Response.Cookies.Append("refreshToken", refreshToken,
                 new CookieOptions
                 {
-                    Expires = DateTimeOffset.UtcNow.AddDays(15),
+                    //Expires = DateTimeOffset.UtcNow.AddDays(15),
+                    //IsEssential = true,
+                    //HttpOnly = true,
+                    //Expires = DateTime.UtcNow.AddDays(1),
+                    //SameSite = SameSiteMode.None,
+                    //Secure = true
                     HttpOnly = true,
+                    Expires = DateTime.UtcNow.AddDays(15),
+                    IsEssential = true,
+                    SameSite = SameSiteMode.None,
                     Secure = true,
-                    SameSite = SameSiteMode.Lax
                 });
+
 
             return loginResponse;
         }
@@ -248,10 +264,17 @@ namespace NanhiDuniya.Service.Services
             };
         }
 
-        public async Task<UserInfoDto> GetUser(string UserId)
+        public async Task<UserInfoDto> GetUser(string accessToken)
         {
-
-            var user = await _userManager.Users.Where(u => u.Id == UserId).Select(u => new UserInfoDto
+            var handler = new JwtSecurityTokenHandler();
+            var jwtSecurityToken = handler.ReadJwtToken(accessToken);
+            var userIdClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == "sub"); // "sub" is a common claim type for user ID
+            if (userIdClaim == null)
+            {
+                throw new ArgumentException("User ID not found in token.");
+            }
+            var userId = userIdClaim.Value;
+            var user = await _userManager.Users.Where(u => u.Id == userId).Select(u => new UserInfoDto
             {
                 Id = u.Id,
                 FullName = u.FirstName + " " + u.LastName,

@@ -4,13 +4,13 @@ import fetcher from '@/utils/fetcher';
 
 import useSWR from 'swr';
 
-function useUser (id:string) {
-  const { data, error, isLoading } = useSWR(`/api/Account/Users/${id}`, fetcher,{ revalidateOnFocus: false, revalidateOnReconnect: false,refreshInterval: 0 })
+function useUser () {
+  const { data, error, isLoading } = useSWR(`/api/Account/me`, fetcher,{ revalidateOnFocus: false, revalidateOnReconnect: false,refreshInterval: 0 })
  
   return {
     user: data,
     isLoading,
-    isError: error
+    isError: error,
   }
 }
 

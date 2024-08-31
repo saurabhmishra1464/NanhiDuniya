@@ -8,12 +8,11 @@ import axiosInstance from '@/utils/AxiosInstances/api';
 import { toast } from 'react-toastify';
 const UploadImage = () => {
   const { register, handleSubmit, setValue, watch, formState: { errors }, } = useForm();
-  const userId = "27133c5d-d9c3-45dd-b7b0-a16108ab11dc";
   const onSubmit = async (data: FieldValues) => {
     try {
       const formData = new FormData();
       formData.append('formFile', data.file[0]);
-      formData.append('Id', userId);
+      formData.append('Id', "");
       const response = await axiosInstance.post('/api/Account/UploadProfilePicture', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',

@@ -14,7 +14,7 @@ namespace NanhiDuniya.Service.Services
         Task<String> GenerateRefreshToken();
         Task<string> GenerateAccessToken(string userId);
         Task RevokeRefreshToken(string userId);
-        Task<RefreshTokenResponse> VerifyRefreshToken(RefreshTokenDto request);
+        Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken);
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
     }

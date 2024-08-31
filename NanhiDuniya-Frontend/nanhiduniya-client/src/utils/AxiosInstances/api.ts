@@ -1,64 +1,51 @@
 import axios from 'axios';
-import https from 'https';
-import { getSession } from 'next-auth/react';
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-// Create an HTTPS agent that ignores SSL certificate validation
-const agent = new https.Agent({
-  rejectUnauthorized: false
-});
 
-// Create an Axios instance with default settings
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-   withCredentials: true, // Include cookies in requests
-  httpsAgent: agent,
-  headers: {
-    Accept: "application/json",
-    "ngrok-skip-browser-warning": true,
-    "Access-Control-Allow-Headers": "*",
-  },
+  withCredentials: true,
 });
 
+let isRefreshing = false;
+let refreshTokenPromise: Promise<string> | null = null;
 
-// Axios request interceptor
-// axiosInstance.interceptors.request.use(
-//   async (config) => {
-//     // Retrieve user information from local storage
-//     const session = await getSession();
-//     const token = session?.user.token;
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
 
-//     // Add Authorization header if the user has an access token
-//     if (token) {
-//       config.headers["Authorization"] = `Bearer ${token}`;
-//     } else {
-//       // Set an empty Authorization header if no access token is available
-//       delete config.headers["Authorization"];
-//     }
-//     // You can also modify other parts of the config as needed
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
 
-//     return config;
-//   },
-//   (error) => {
-//     // Do something with request error
-//     return Promise.reject(error);
-//   }
-// );
+      if (!isRefreshing) {
+        isRefreshing = true;
 
+        refreshTokenPromise = axiosInstance.post("/api/Account/RefreshToken")
+          .then(({ data }) => {
+            axiosInstance.defaults.headers.common['Authorization'] = 'Bearer ' + data.accessToken;
+            return data.accessToken;
+          })
+          .catch(() => {
+            refreshTokenPromise = null;
+            isRefreshing = false;
+            return Promise.reject(new Error('Refresh token failed'));
+          })
+          .finally(() => {
+            isRefreshing = false;
+            refreshTokenPromise = null;
+          });
+      }
 
-// axiosInstance.interceptors.response.use(
-//   (response) => {
-//     return response;
-//   },
-//   (error) => {
-//     if (error.response && error.response.status === 401) {
-//       // Handle unauthorized access (e.g., redirect to login)
-//       window.location.href = '/auth/login';
-//     }
-//     return Promise.reject(error);
-//   }
-// );
+      try {
+        const newToken = await refreshTokenPromise;
+        originalRequest.headers['Authorization'] = 'Bearer ' + newToken;
+        return axiosInstance(originalRequest);
+      } catch (err) {
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 export default axiosInstance;
-
-// export { axiosInstance };
