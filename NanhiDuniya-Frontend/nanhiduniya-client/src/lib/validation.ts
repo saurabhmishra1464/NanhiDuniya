@@ -49,6 +49,19 @@ export const PersonalInfoValidation = z.object({
 
 })
 
+// export type FormState =
+//   | {
+//       errors?: {
+//         name?: string[]
+//         email?: string[]
+//         password?: string[]
+//         userName?: string[]
+        
+//       }
+//       message?: string
+//     }
+//   | undefined
+
 // export const UserFormValidation = z.object({
 //   name: z
 //     .string()

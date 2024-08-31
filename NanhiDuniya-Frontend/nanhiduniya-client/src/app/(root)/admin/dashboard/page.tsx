@@ -8,3 +8,5 @@ const AdminDashBoardPage = () => {
 }
 
 export default AdminDashBoardPage;
+
+// export default withAuth(AdminDashBoardPage);

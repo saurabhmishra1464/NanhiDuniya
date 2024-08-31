@@ -14,6 +14,8 @@ using NanhiDuniya.Core.Constants;
 using Microsoft.Extensions.DependencyInjection;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Data.Repositories;
+using Microsoft.Net.Http.Headers;
+using NanhiDuniya.UserManagement.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -88,14 +90,36 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAllOrigins",
-        b => b.AllowAnyHeader()
-            .AllowAnyOrigin()
-            .AllowAnyMethod());
+    options.AddPolicy("CorsPolicy",
+        builder => builder
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials()); // This line is crucial
 });
+//builder.Services.AddCors(options =>
+//  options.AddPolicy("Dev", builder =>
+//  {
+//      // Allow multiple methods
+//      builder.WithMethods("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+//        .WithHeaders(
+//          HeaderNames.Accept,
+//          HeaderNames.ContentType,
+//          HeaderNames.Authorization)
+//        .AllowCredentials()
+//        .SetIsOriginAllowed(origin =>
+//        {
+//            if (string.IsNullOrWhiteSpace(origin)) return false;
+//            // Only add this to allow testing with localhost, remove this line in production!
+//            if (origin.ToLower().StartsWith("http://localhost:3000")) return true;
+//            // Insert your production domain here.
+//            if (origin.ToLower().StartsWith("https://dev.mydomain.com")) return true;
+//            return false;
+//        });
+//  })
+//);
 builder.Services.Configure<JWTService>(configuration.GetSection("JwtSettings"));
 builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection("NanhiDuniyaServices"));
 
@@ -110,13 +134,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
-
+app.UseMiddleware<JwtFromCookieMiddleware>();
 app.UseMiddleware<ExceptionMiddleware>();
-
 app.UseHttpsRedirection();
 
-app.UseCors("AllowAllOrigins");
-
+app.UseCors("CorsPolicy");
+app.UseCookiePolicy();
 app.UseAuthentication();
 
 app.UseAuthorization();

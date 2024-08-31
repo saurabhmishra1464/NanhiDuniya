@@ -2,7 +2,6 @@
 
 import useUser from '@/hooks/useUsers';
 import { PersonalInfoValidation } from '@/lib/validation';
-import axiosInstance from '@/utils/AxiosInstances/api';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSession } from 'next-auth/react';
 import React, { useEffect } from 'react'
@@ -11,12 +10,14 @@ import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import useSWR from 'swr';
+import { useAuth } from '@/context/AuthProvider';
+import  axiosInstance  from '@/utils/AxiosInstances/api';
 function PersonalInformationForm() {
+    const {  } = useAuth();
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: zodResolver(PersonalInfoValidation),
     });
-    const userId = "27133c5d-d9c3-45dd-b7b0-a16108ab11dc";
-    const { user, isLoading } = useUser(userId);
+    const { user, isLoading } = useUser();
 
     useEffect(() => {
         if (user) {
@@ -31,7 +32,7 @@ function PersonalInformationForm() {
 
     const onSubmit = async (data: FieldValues) => {
         try {
-            const payLoad = { ...data, Id: userId };
+            const payLoad = { ...data, Id: "userId" };
             const response = await axiosInstance.put('/api/Account/UpdateUser', payLoad);
             if (response?.status === 200) {
                 toast.success('Personal Information Updated successfully');

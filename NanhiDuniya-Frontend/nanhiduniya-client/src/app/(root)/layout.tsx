@@ -2,10 +2,10 @@
 import React, { useState } from "react";
 import { useModal } from "@/context/ModalProvider";
 import { ModalTypes } from "@/enums/modalTypes";
-import SessionCheck from "@/context/SessionCheck";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
 import LogoutModal from "@/components/modals/LogoutModal";
+import { useAuth } from "@/context/AuthProvider";
 
 // Lazy load components
 // const Sidebar = lazy(() => import('@/components/Sidebar'));
@@ -25,7 +25,6 @@ export default function RootLayout({
   //     <span className="ml-4 text-gray-500">Component Loading...</span>
   //   </div>
   // );
-  
   return (
       <div className="flex">
         <Sidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ namespace NanhiDuniya.Service.Services
         public static IServiceCollection DataServiceCollection(this IServiceCollection services, IConfiguration Configuration)
         {
             // Register AutoMapper
+            
             services.AddAutoMapper(typeof(MappingProfile).Assembly);
             services.Configure<NanhiDuniyaServicesSettings>(Configuration.GetSection("NanhiDuniyaServices"));
             services.AddHttpContextAccessor();

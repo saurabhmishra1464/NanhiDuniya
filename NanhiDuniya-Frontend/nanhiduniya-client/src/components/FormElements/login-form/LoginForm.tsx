@@ -3,65 +3,34 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import LottieComponent from "@/components/LottieComponent";
-import { FieldValues, useForm } from 'react-hook-form';
-import { signIn, useSession } from 'next-auth/react';
-import router, { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { LoginFormValidation } from "@/lib/validation";
 import LoginError from "@/app/auth/error";
-import { handleError } from "@/utils/ErrorHandelling/errorHandler";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
+import { login } from "@/app/actions/auth";
+import { z } from "zod";
 import { useAuth } from "@/context/AuthProvider";
 
-const SignIn: React.FC = () => {
-
-  const [loading, setLoading] = useState(false);
+export default function SignIn() {
+ 
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loginError, setLoginError] = useState("");
-  const { login } = useAuth();
-  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm({
+  type loginUser = z.infer<typeof LoginFormValidation>
+  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<loginUser>({
     resolver: zodResolver(LoginFormValidation),
   });
   const password = watch('password');
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-  const onSubmit = async (data: FieldValues) => {
-    debugger
-    // setLoading(true);
-      await login(
-        data.userName,
-        data.password,
-      );
-    //   if (response?.ok) {
-    //      toast.success("You are now signed in!");
-    //     router.push("/admin/dashboard");
-    //   } if (!response?.ok) {
-    //     const errorObject = {
-    //       name: "Error",
-    //       message: response?.error || 'An unexpected error occurred. Please try again.',
-    //       statusCode: response?.status ?? 0,
-    //     } as Error;
-    //     if (response?.status === 401) {
-    //       errorObject.message = 'Invalid email or password';
-    //     } else if (response?.status === 500) {
-    //       errorObject.message = 'Server error, please try again later';
-    //     }
-    //     const message = handleError(errorObject as Error);
-    //     setLoginError(message);
-    //     toast.error(message);
-    //     return;
-    //   }
-    // } catch (error: any) {
-    //   const message = handleError(error as Error);
-    //   setLoginError(message);
-    //   toast.error(message);
-    // } finally {
-    //   setLoading(false);
-    // }
+  const {login,loading} = useAuth();
+  const onSubmit = async (data: z.infer<typeof LoginFormValidation>) => {
+    const result = await login(data.userName, data.password);
   }
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -130,7 +99,7 @@ const SignIn: React.FC = () => {
                 </label>
                 <div className="relative">
                   <input
-                     type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? 'text' : 'password'}
                     {...register("password")}
                     placeholder="6+ Characters, 1 Capital letter"
                     className="w-full rounded-lg border border-stroke bg-transparent py-4 pl-6 pr-10 text-black outline-none focus:border-primary focus-visible:shadow-none dark:border-form-strokedark dark:bg-form-input dark:text-white dark:focus:border-primary"
@@ -158,14 +127,14 @@ const SignIn: React.FC = () => {
                     </svg>
                   </span>
                   {password && (
-                  <button
-                    type="button"
-                    onClick={togglePasswordVisibility}
-                    className="absolute right-10.5 top-4.5 text-gray-600 hover:text-gray-900 focus:outline-none"
-                  >
-                    <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      onClick={togglePasswordVisibility}
+                      className="absolute right-10.5 top-4.5 text-gray-600 hover:text-gray-900 focus:outline-none"
+                    >
+                      <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} size="sm" />
+                    </button>
+                  )}
                 </div>
                 {
                   errors?.password && (<span className='text-red text-sm mt-1'>{`${errors.password.message}`}</span>)
@@ -224,5 +193,3 @@ const SignIn: React.FC = () => {
 
   );
 };
-
-export default SignIn;
