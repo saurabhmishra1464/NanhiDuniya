@@ -11,10 +11,12 @@ using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Core.Utilities;
 using NanhiDuniya.Data.Entities;
 using Newtonsoft.Json.Linq;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Runtime;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -29,7 +31,9 @@ namespace NanhiDuniya.Service.Services
         private readonly ILogger<TokenService> _logger;
         private readonly ITokenRepository _tokenRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly JwtSettings _settings;
         public TokenService(
+            JwtSettings settings,
             UserManager<ApplicationUser> userManager,
             IOptions<JWTService> options,
             ILogger<TokenService> logger,
@@ -37,6 +41,7 @@ namespace NanhiDuniya.Service.Services
             IHttpContextAccessor httpContextAccessor
             )
         {
+            _settings = settings;
             _userManager = userManager;
             _logger = logger;
             _jwtService = options.Value;
@@ -60,81 +65,53 @@ namespace NanhiDuniya.Service.Services
             }
         }
 
-        public async Task<string> GenerateAccessToken(string userId)
+        public async Task<string> GenerateAccessToken(string email, string userId)
         {
-            var user = await FindUserById(userId);
-
-            if (user == null)
-            {
-                _logger.LogError("Invalid user or access denied");
-                throw new UnauthorizedAccessException();
-            }
+            var user = await _userManager.FindByIdAsync(userId);
             var roles = await _userManager.GetRolesAsync(user);
             var roleClaims = roles.Select(x => new Claim(ClaimTypes.Role, x)).ToList();
             var userClaims = await _userManager.GetClaimsAsync(user);
-
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Sub, email),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim("uid", user.Id),
-            }
-            .Union(userClaims).Union(roleClaims);
-            var securitykey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtService.Secret!));
+                new Claim(ClaimTypes.NameIdentifier, userId)
+            }.Union(userClaims).Union(roleClaims);
 
-            var credentials = new SigningCredentials(securitykey, SecurityAlgorithms.HmacSha256);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Key));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: _jwtService.Issuer,
-                audience: _jwtService.Audience,
-                claims: claims,
-                expires: DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)),
-                signingCredentials: credentials
-                );
-
+            _settings.Issuer,
+                _settings.Audience,
+            claims,
+                expires: DateTime.UtcNow + _settings.Expire,
+                signingCredentials: creds
+            );
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken)
+        public async Task<LoginResponse> VerifyRefreshToken(string refreshToken,string userName)
         {
             
             //var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
             //var userId = tokenContent.Claims.ToList().FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Sub)?.Value;
 
             //_logger.LogError("Verifying refresh token for user ID: {UserId}", userId);
-            //var user = await FindUserById(userId);
-            if (string.IsNullOrEmpty(refreshToken))
-                throw new UnauthorizedAccessException();
-
+            var user = await _userManager.FindByEmailAsync(userName);
             var storedToken = await _tokenRepository.GetRefreshTokenAsync(refreshToken);
             if (storedToken == null || storedToken.RefreshToken != refreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
             {
                 throw new UnauthorizedAccessException();
             }
-            var accessToken = await GenerateAccessToken(storedToken.UserId);
-            var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-            var newtokenContent = jwtSecurityTokenHandler.ReadJwtToken(accessToken);
-            var expiration = newtokenContent.ValidTo;
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("accessToken", accessToken,
-                new CookieOptions
-                {
-                    //Expires = DateTimeOffset.UtcNow.AddMinutes(10),
-                    //IsEssential = true,
-                    //HttpOnly = true,
-                    //Expires = DateTime.UtcNow.AddDays(1),
-                    //SameSite = SameSiteMode.None,
-                    //Secure = true
-                    HttpOnly = true,
-                    Expires = DateTimeOffset.UtcNow.AddMinutes(3),
-                    IsEssential = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = true,
-                });
-            return new RefreshTokenResponse
+            var accessToken = await GenerateAccessToken(userName,storedToken.UserId);
+         
+            return new LoginResponse
             {
-                Token = accessToken,
-                ExpiresAt = expiration
+                AccessToken = accessToken,
+                RefreshToken = storedToken.RefreshToken,
+                UserId = storedToken.UserId,
+                UserName = user.UserName
             };
         }
         public async Task RevokeRefreshToken(string userId)
@@ -169,7 +146,7 @@ namespace NanhiDuniya.Service.Services
             return await _userManager.FindByIdAsync(userId!);
         }
 
-        public static bool HasTokenExpired(string token)
+        public  bool HasTokenExpired(string token)
         {
             if (string.IsNullOrEmpty(token))
             {

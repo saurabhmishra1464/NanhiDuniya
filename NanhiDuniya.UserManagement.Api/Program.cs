@@ -5,22 +5,19 @@ using NanhiDuniya.Data.Entities;
 using NanhiDuniya.UserManagement.APi.Middleware;
 using Serilog;
 using Microsoft.AspNetCore.Identity;
-using NanhiDuniya.Service.Mapping;
-using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using NanhiDuniya.Core.Constants;
-using Microsoft.Extensions.DependencyInjection;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Data.Repositories;
-using Microsoft.Net.Http.Headers;
-using NanhiDuniya.UserManagement.Api.Middleware;
+using NanhiDuniya.Core.Utilities;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 // Add services to the container.
-
+var jwtSettings = new JwtSettings();
+configuration.Bind("JwtSettings", jwtSettings);
+builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -76,6 +73,7 @@ builder.Services.AddAuthentication(options =>
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
@@ -84,11 +82,30 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true,
-        ValidIssuer = "NanhiDuniyaUserManagementAPI",
-        ValidAudience = "NanhiDuniyaUserManagementAPIClient",
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("thisismycustomSecretkeyforauthentication"))
+        ValidIssuer = jwtSettings.Issuer,
+        ValidAudience = jwtSettings.Audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
+        ClockSkew = jwtSettings.Expire
     };
-});
+    options.SaveToken = true;
+    options.Events = new JwtBearerEvents();
+    options.Events.OnMessageReceived = context => {
+
+        if (context.Request.Cookies.ContainsKey("X-Access-Token"))
+        {
+            context.Token = context.Request.Cookies["X-Access-Token"];
+        }
+
+        return Task.CompletedTask;
+    };
+     })
+     .AddCookie(options =>
+     {
+      options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+      options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+      options.Cookie.IsEssential = true;
+     });
+
 
 builder.Services.AddCors(options =>
 {
@@ -134,8 +151,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseSerilogRequestLogging();
-app.UseMiddleware<JwtFromCookieMiddleware>();
 app.UseMiddleware<ExceptionMiddleware>();
+//app.UseMiddleware<JwtFromCookieMiddleware>();
 app.UseHttpsRedirection();
 
 app.UseCors("CorsPolicy");

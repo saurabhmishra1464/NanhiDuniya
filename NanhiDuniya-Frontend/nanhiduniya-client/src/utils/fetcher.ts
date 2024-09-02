@@ -1,12 +1,7 @@
-import axiosInstance from "./AxiosInstances/api";
-
+import { axiosPrivate } from "./AxiosInstances/api";
 const fetcher = async (url:string) => {
-    try {
-      const res = await axiosInstance.get(url);
-      return res.data;
-    } catch (err:any) {
-      throw err.response.data;
-    }
+       const res = await axiosPrivate.get(url);
+     return res.data;
   };
 
   export default fetcher

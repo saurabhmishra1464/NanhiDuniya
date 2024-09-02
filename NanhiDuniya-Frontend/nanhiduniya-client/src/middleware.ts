@@ -100,7 +100,7 @@ export async function middleware(request: NextRequest) {
   console.log(request.nextUrl.pathname);
   const url = request.nextUrl;
   // const token = request.cookies.get('accessToken')?.value;
-  const refrehtoken = request.cookies.get('refreshToken')?.value;
+  const refrehtoken = request.cookies.get('X-Refresh-Token')?.value;
   const isProtectedRoute = protectedRoutes.some(route => url.pathname.startsWith(route));
 // console.log(token);
   if (isProtectedRoute) {

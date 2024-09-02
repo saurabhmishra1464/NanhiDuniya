@@ -12,10 +12,11 @@ namespace NanhiDuniya.Service.Services
     public interface ITokenService
     {
         Task<String> GenerateRefreshToken();
-        Task<string> GenerateAccessToken(string userId);
+        Task<string> GenerateAccessToken(string email, string userId);
         Task RevokeRefreshToken(string userId);
-        Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken);
+        Task<LoginResponse> VerifyRefreshToken(string refreshToken, string userName);
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
+        bool HasTokenExpired(string token);
     }
 }
