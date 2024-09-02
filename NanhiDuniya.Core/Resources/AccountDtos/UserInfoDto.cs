@@ -18,5 +18,8 @@ namespace NanhiDuniya.Core.Resources.AccountDtos
         [EmailAddress(ErrorMessage = "Email Id is required")]
         public string Email { get; set; }
         public string? Bio { get; set; }
+        public string? ProfilePictureUrl { get; set; }
+        public string? AccessToken { get; set; }
+        
     }
 }

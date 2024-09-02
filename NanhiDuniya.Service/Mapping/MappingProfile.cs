@@ -17,7 +17,7 @@ namespace NanhiDuniya.Service.Mapping
             CreateMap<LoginRequestDto,LoginModel>();
             CreateMap<LoginResponse, LoginResponseResource>();
             CreateMap<LoginResponse, UserRefreshToken>()
-    .ForSourceMember(login => login.Token, login => login.DoNotValidate());
+    .ForSourceMember(login => login.AccessToken, login => login.DoNotValidate());
            
         }
     }

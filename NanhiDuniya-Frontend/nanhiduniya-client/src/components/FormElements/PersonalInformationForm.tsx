@@ -10,15 +10,13 @@ import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import useSWR from 'swr';
-import { useAuth } from '@/context/AuthProvider';
-import  axiosInstance  from '@/utils/AxiosInstances/api';
+import { axiosPrivate } from '@/utils/AxiosInstances/api';
 function PersonalInformationForm() {
-    const {  } = useAuth();
+    // const { auth } = useAuth();
     const { register, handleSubmit, formState: { errors }, setValue } = useForm({
         resolver: zodResolver(PersonalInfoValidation),
     });
-    const { user, isLoading } = useUser();
-
+    const { user, isLoading,mutate } = useUser();
     useEffect(() => {
         if (user) {
             setValue('fullName', user?.fullName);
@@ -31,10 +29,12 @@ function PersonalInformationForm() {
     
 
     const onSubmit = async (data: FieldValues) => {
+        debugger
         try {
-            const payLoad = { ...data, Id: "userId" };
-            const response = await axiosInstance.put('/api/Account/UpdateUser', payLoad);
+            const payLoad = { ...data, Id: user.id };
+            const response = await axiosPrivate.put('/api/Account/UpdateUser', payLoad);
             if (response?.status === 200) {
+                 mutate();
                 toast.success('Personal Information Updated successfully');
             }
         } catch (error: any) {

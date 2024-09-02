@@ -4,21 +4,26 @@ import React from 'react'
 import Image from "next/image";
 import { FieldValues, useForm } from 'react-hook-form'
 import { useSession } from 'next-auth/react';
-import axiosInstance from '@/utils/AxiosInstances/api';
+
 import { toast } from 'react-toastify';
+import useUser from '@/hooks/useUsers';
+import { axiosPrivate } from '@/utils/AxiosInstances/api';
 const UploadImage = () => {
   const { register, handleSubmit, setValue, watch, formState: { errors }, } = useForm();
+  const { user, isLoading,mutate } = useUser();
   const onSubmit = async (data: FieldValues) => {
     try {
       const formData = new FormData();
       formData.append('formFile', data.file[0]);
-      formData.append('Id', "");
-      const response = await axiosInstance.post('/api/Account/UploadProfilePicture', formData, {
+      formData.append('Id', user.id);
+      const response = await axiosPrivate.post('/api/Account/UploadProfilePicture', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        withCredentials : true
       });
       if (response?.status === 200) {
+         mutate();
         toast.success('Image Updated successfully');
       }
     } catch (error: any) {
@@ -49,7 +54,7 @@ const UploadImage = () => {
                   alt="User"
                   className="rounded-full h-full w-full"
                 />) : (<Image
-                  src={""}
+                  src={user?.profilePictureUrl}
                   width={55}
                   height={55}
                   alt="User"

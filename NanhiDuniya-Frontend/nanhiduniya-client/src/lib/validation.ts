@@ -44,6 +44,11 @@ export const PersonalInfoValidation = z.object({
         }
         return phone;
       }).refine((phone) => /^\+\d{12}$/.test(phone), "Invalid phone number"),
+
+      userName: z
+      .string()
+      .nonempty({ message: 'Email is required' })
+      .email({ message: 'Invalid email address' }),
     
     bio: z.string().optional(),
 

@@ -7,11 +7,14 @@ import LogoutModal from "../../components/modals/LogoutModal";
 import { toast } from "react-toastify";
 import { useModal } from "@/context/ModalProvider";
 import { ModalTypes } from "@/enums/modalTypes";
+import useUser from "@/hooks/useUsers";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const { openModal } = useModal();
-
+  const { user, isLoading } = useUser();
+  if(!user) return null;
+  console.log("inside dropdown",user);
   return (
     <ClickOutside onClick={() => setDropdownOpen(false)} className="relative">
       <Link
@@ -30,7 +33,7 @@ const DropdownUser = () => {
           <Image
             width={55}
             height={55}
-            src={"/images/profilePic.jpg"}
+            src={user?.profilePictureUrl}
             alt="User"
             className="rounded-full h-full w-full"
           />

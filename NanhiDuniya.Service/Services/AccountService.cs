@@ -88,57 +88,18 @@ namespace NanhiDuniya.Service.Services
                 _logger.LogWarning($"User with email {loginDto.Email} was not found");
                 return null;
             }
-
-            var token = await _tokenService.GenerateAccessToken(user.Id);
-            var refreshToken = await _tokenService.GenerateRefreshToken();
-
-            var handler = new JwtSecurityTokenHandler();
-            var jwtSecurityToken = handler.ReadJwtToken(token);
-            var expiration = jwtSecurityToken.ValidTo;
-            var loginResponse = new LoginResponse
-            {
-                Token = token,
-                UserId = user.Id,
-                RefreshToken = refreshToken,
-                ExpiresAt = expiration
-            };
-            var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
-            await _tokenService.AddRefreshTokenAsync(newRefreshToken);
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("accessToken", token,
-                new CookieOptions
+                var token = await _tokenService.GenerateAccessToken(user.Email, user.Id);
+                var refreshToken = await _tokenService.GenerateRefreshToken();
+                var loginResponse = new LoginResponse
                 {
-                    //Expires = DateTimeOffset.UtcNow.AddMinutes(10),
-                    //IsEssential = true,
-                    //HttpOnly = true,
-                    //Expires = DateTime.UtcNow.AddDays(1),
-                    //SameSite = SameSiteMode.None,
-                    //Secure = true
-
-                    HttpOnly = true,
-                    Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)),
-                    IsEssential = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = true,
-                });
-
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("refreshToken", refreshToken,
-                new CookieOptions
-                {
-                    //Expires = DateTimeOffset.UtcNow.AddDays(15),
-                    //IsEssential = true,
-                    //HttpOnly = true,
-                    //Expires = DateTime.UtcNow.AddDays(1),
-                    //SameSite = SameSiteMode.None,
-                    //Secure = true
-                    HttpOnly = true,
-                    Expires = DateTime.UtcNow.AddDays(15),
-                    IsEssential = true,
-                    SameSite = SameSiteMode.None,
-                    Secure = true,
-                });
-
-
-            return loginResponse;
+                    AccessToken = token,
+                    UserName = user.UserName,
+                    UserId = user.Id,
+                    RefreshToken = refreshToken,
+                };
+                var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
+                await _tokenService.AddRefreshTokenAsync(newRefreshToken);
+                return loginResponse;
         }
 
 
@@ -268,7 +229,7 @@ namespace NanhiDuniya.Service.Services
         {
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(accessToken);
-            var userIdClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == "sub"); // "sub" is a common claim type for user ID
+            var userIdClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier); // "sub" is a common claim type for user ID
             if (userIdClaim == null)
             {
                 throw new ArgumentException("User ID not found in token.");
@@ -282,7 +243,8 @@ namespace NanhiDuniya.Service.Services
                 Email = u.Email,
                 Bio = u.Bio,
                 UserName = u.UserName,
-
+                ProfilePictureUrl = u.ProfilePictureUrl,
+                AccessToken = accessToken,
             }).FirstOrDefaultAsync();
             if (user == null)
             {

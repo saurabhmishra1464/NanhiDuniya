@@ -12,6 +12,7 @@ using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Data.Entities;
 using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Service.Services;
 using NanhiDuniya.UserManagement.Api.Extentions;
@@ -33,7 +34,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         private readonly IPasswordService _passwordService;
         private readonly ITokenService _tokenService;
         private readonly IImageService _imageService;
-        public AccountController(IAccountService accountService, IImageService imageService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
+        public AccountController(IAccountService accountService,  IImageService imageService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
         {
             _accountService = accountService;
             _passwordService = passwordService;
@@ -85,31 +86,64 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         #endregion
 
         #region Authentication Token and handshake endpoints 
-        [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
-        {
-            var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
+        //[HttpPost("Login")]
+        //public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
+        //{
+        //    var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
 
-            if (result == null)
-            {
-                _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
-                throw new UnauthorizedAccessException("Invalid login credentials.");
-            }
-            _logger.LogInformation("User {Username} logged in successfully.", model.Email);
-            return Ok(result);
+        //    if (result == null)
+        //    {
+        //        _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
+        //        throw new UnauthorizedAccessException("Invalid login credentials.");
+        //    }
+        //    _logger.LogInformation("User {Username} logged in successfully.", model.Email);
+        //    return Ok(result);
+        //}
+
+        [HttpPost("login")]
+        public async Task<IActionResult> LoginApi([FromBody] LoginModel model)
+        {
+                 var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
+                if (result == null)
+                {
+                    _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
+                    throw new UnauthorizedAccessException("Invalid login credentials.");
+                }
+                Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append("X-Username", result.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+                Response.Cookies.Append("X-Refresh-Token", result.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+                return Ok();
         }
 
-        [HttpPost("RefreshToken")]
-        public async Task<IActionResult> RefreshToken()
-        {
-            var refreshToken = Request.Cookies["refreshToken"];
-            var response = await _tokenService.VerifyRefreshToken(refreshToken);
-            if (response == null)
-            {
-                throw new UnauthorizedAccessException();
-            }
 
-            return Ok(response);
+
+        //[HttpPost("RefreshToken")]
+        //public async Task<IActionResult> RefreshToken()
+        //{
+        //    var refreshToken = Request.Cookies["refreshToken"];
+        //    var response = await _tokenService.VerifyRefreshToken(refreshToken);
+        //    if (response == null)
+        //    {
+        //        throw new UnauthorizedAccessException();
+        //    }
+
+        //    return Ok(response);
+        //}
+
+        [HttpGet("refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            if (!(Request.Cookies.TryGetValue("X-Username", out var userName) && Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
+                return BadRequest();
+
+            var result = await _tokenService.VerifyRefreshToken(refreshToken, userName);
+           
+            Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            Response.Cookies.Append("X-Username", result.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            Response.Cookies.Append("X-Refresh-Token", result.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+            return Ok();
         }
 
         [Authorize(Roles = UserRoles.Admin)]
@@ -156,7 +190,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [Authorize]
         public async Task<IActionResult> GetUser()
         {
-            var accessToken = Request.Cookies["accessToken"];
+            var accessToken = Request.Cookies["X-Access-Token"];
             var user = await _accountService.GetUser(accessToken);
 
             return Ok(user);
@@ -168,6 +202,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         #region Update User
 
         [HttpPut("UpdateUser")]
+        [Authorize]
         public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)
         {
             try
@@ -182,12 +217,9 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         }
 
         [HttpPost("UploadProfilePicture")]
+        [Authorize]
         public async Task<IActionResult> UploadProfilePicture(UploadProfilePictureDto upload)
         {
-            if (upload.formFile == null || upload.formFile.Length == 0)
-            {
-                throw new ArgumentException("File is empty,Please attach Image.");
-            }
             var result = await _imageService.SaveImageAsync(upload);
             if (result.IsSuccess)
             {

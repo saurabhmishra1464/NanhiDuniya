@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Resources.AccountDtos;
@@ -15,38 +16,45 @@ namespace NanhiDuniya.Service.Services
     public class ImageService : IImageService
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly string _storagePath;
         public ImageService(UserManager<ApplicationUser> userManager) 
-        { 
-        _userManager = userManager;
-        }
-        public async Task<ResultResponse> SaveImageAsync(UploadProfilePictureDto image/*, string uploadDirectory*/)
         {
+            _userManager = userManager;
+        }
+        public async Task<ResultResponse> SaveImageAsync(UploadProfilePictureDto upload)
+        {
+            if (upload.formFile == null || upload.formFile.Length == 0)
+            {
+                throw new ArgumentException("File is empty,Please attach Image.");
+            }
             ResultResponse resultResponse = new();
-            if (image.formFile == null || image.formFile.Length == 0)
+            var user = await _userManager.FindByIdAsync(upload.Id);
+            if(user == null)
             {
-                throw new ArgumentNullException(nameof(image));
+                throw new KeyNotFoundException("User Not Found");
             }
-            var user = await _userManager.FindByIdAsync(image.Id);
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(image.formFile.FileName);
-            user.ProfilePictureUrl = fileName;
-            var result = await _userManager.UpdateAsync(user);
-            if (result.Succeeded)
+            
+            using (var memoryStream = new MemoryStream())
             {
-                resultResponse.Message = "Image Uploaded Uploaded Successfully";
-                resultResponse.IsSuccess = true;
-            }
-            else
-            {
-                resultResponse.Message = "Something went wrong while uploading Image";
-            }
-            //var filePath = Path.Combine(uploadDirectory, fileName);
+                await upload.formFile.CopyToAsync(memoryStream);
+                var imageBytes = memoryStream.ToArray();
+                var base64String = Convert.ToBase64String(imageBytes);
+                var profilePictureUrl = $"data:{upload.formFile.ContentType};base64,{base64String}";
+                user.ProfilePictureUrl = profilePictureUrl;
+                var result = await _userManager.UpdateAsync(user);
+                if (result.Succeeded)
+                {
+                    resultResponse.Message = "Image Uploaded Uploaded Successfully";
+                    resultResponse.IsSuccess = true;
+                }
+                else
+                {
+                    resultResponse.Message = "Something went wrong while uploading Image";
+                }
 
-            //await using (var stream = new FileStream(filePath, FileMode.Create))
-            //{
-            //    await image.CopyToAsync(stream);
-            //}
+            }
 
-            return resultResponse; ;
+            return resultResponse;
         }
     }
 }
