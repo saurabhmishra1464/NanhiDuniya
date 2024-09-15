@@ -1,6 +1,5 @@
 'use client'
 import LoadingSpinner from "@/components/LoadingSpinner";
-import useUser from "@/hooks/useUsers";
 import { axiosPrivate, axiosPublic } from "@/utils/AxiosInstances/api";
 import { handleError } from "@/utils/ErrorHandelling/errorHandler";
 import axios, { HttpStatusCode, InternalAxiosRequestConfig } from "axios";
@@ -26,7 +25,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const response = await axiosPublic.post('/api/Account/Login', { email, password });
       if (response.status === HttpStatusCode.Ok) {
-        console.log(response.data);
         toast.success("You are now signed in!");
         router.push("/admin/dashboard");
         setLoading(false);

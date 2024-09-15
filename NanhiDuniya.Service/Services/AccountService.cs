@@ -28,6 +28,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 
 namespace NanhiDuniya.Service.Services
 {
@@ -62,7 +63,7 @@ namespace NanhiDuniya.Service.Services
             IWebHostEnvironment env
             )
         {
-            _httpContextAccessor= httpContextAccessor;
+            _httpContextAccessor = httpContextAccessor;
             _userManager = userManager;
             _roleManager = roleManager;
             _emailClient = emailClient;
@@ -80,26 +81,60 @@ namespace NanhiDuniya.Service.Services
         #region Authentication Token/Login
         public async Task<LoginResponse> Login(LoginModel loginDto)
         {
-            var user = await _userManager.FindByEmailAsync(loginDto.Email);
-            bool isValidUser = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+            var user = await _userManager.FindByEmailAsync(loginDto.UserName);
 
-            if (user == null || isValidUser == false)
+            if (user == null)
             {
-                _logger.LogWarning($"User with email {loginDto.Email} was not found");
-                return null;
-            }
-                var token = await _tokenService.GenerateAccessToken(user.Email, user.Id);
-                var refreshToken = await _tokenService.GenerateRefreshToken();
-                var loginResponse = new LoginResponse
+                _logger.LogWarning($"User with email {loginDto.UserName} was not found");
+                return new LoginResponse
                 {
-                    AccessToken = token,
-                    UserName = user.UserName,
-                    UserId = user.Id,
-                    RefreshToken = refreshToken,
+                    Success = false,
+                    Message = "User doesn't exist! Please register first"
                 };
-                var newRefreshToken = _mapper.Map<UserRefreshToken>(loginResponse);
-                await _tokenService.AddRefreshTokenAsync(newRefreshToken);
-                return loginResponse;
+            }
+
+            bool isValidUser = await _userManager.CheckPasswordAsync(user, loginDto.Password);
+            if (!isValidUser)
+            {
+                return new LoginResponse
+                {
+                    Success = false,
+                    Message = "Incorrect password! Please try again"
+                };
+            }
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var token = await _tokenService.GenerateAccessToken(user.Email, user.Id);
+            var refreshToken = await _tokenService.GenerateRefreshToken();
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", token, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry))});
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry))});
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Refresh-Token", refreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry))});
+
+            var loginResponse = new LoginResponse
+            {
+                Success = true,
+                Message = "Logged in successfully",
+                User = new UserProfile
+                {
+                    Id = user.Id,
+                    FullName = user.FirstName +" "+ user.LastName,
+                    UserName = user.UserName,
+                    PhoneNumber = user.PhoneNumber,
+                    Email = user.Email,
+                    Bio = user.Bio,
+                    ProfilePictureUrl = user.ProfilePictureUrl,
+                    Roles = roles.ToList(),
+                }
+            };
+
+            var userRefreshToken = new UserRefreshToken
+            {
+                RefreshToken = refreshToken, 
+                UserId = user.Id,             
+                IsRevoked = false             
+            };
+            await _tokenService.AddRefreshTokenAsync(userRefreshToken);
+            return loginResponse;
         }
 
 
@@ -164,7 +199,7 @@ namespace NanhiDuniya.Service.Services
 
                 return new ResultResponse
                 {
-                    IsSuccess = true,
+                    Success = true,
                     Message = "User registered successfully!"
                 };
 
@@ -173,24 +208,23 @@ namespace NanhiDuniya.Service.Services
             return new ResultResponse
             {
                 Message = BuildErrorMessage(result.Errors),
-                IsSuccess = false
+                Success = false
             };
         }
 
         #endregion
 
         #region Update User
-        public async Task<ResultResponse> PutUserAsync(UserInfoDto userInfoDto)
+        public async Task<UpdateUserResponse> PutUserAsync(UserInfoDto userInfoDto)
         {
             var user = await _userManager.FindByIdAsync(userInfoDto.Id);
 
             if (user == null)
             {
                 _logger.LogError("User doesn't exist: {Id}", userInfoDto.Id);
-                return new ResultResponse
+                return new UpdateUserResponse
                 {
                     Message = "User doesn't exist",
-                    IsSuccess = false
                 };
             }
             //var uploadDirectory = Path.Combine(_storagePath);
@@ -209,23 +243,33 @@ namespace NanhiDuniya.Service.Services
             if (result.Succeeded)
             {
                 _logger.LogInformation("User Info Updated SuccesFully: {Id}", userInfoDto.Id);
-                return new ResultResponse
+                return new UpdateUserResponse
                 {
                     Message = "Successfully updated",
-                    IsSuccess = true
+                    Success = true,
+                    userProfile = new UserProfile
+                    {
+                     Id = user.Id,
+                     FullName = user.FirstName + user.LastName,
+                     UserName = user.UserName,
+                     PhoneNumber = user.PhoneNumber,
+                     Email = user.Email,
+                     Bio = user.Bio,
+                     ProfilePictureUrl = user.ProfilePictureUrl,
+                    },
                 };
 
             }
 
             _logger.LogError("Error while updating the user personal info: {Id}", userInfoDto.Id, result);
-            return new ResultResponse
+            return new UpdateUserResponse
             {
                 Message = "Something went wrong",
-                IsSuccess = false
+                Success = false,
             };
         }
 
-        public async Task<UserInfoDto> GetUser(string accessToken)
+        public async Task<GetUserProfileResponse> GetUser(string accessToken)
         {
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(accessToken);
@@ -235,7 +279,7 @@ namespace NanhiDuniya.Service.Services
                 throw new ArgumentException("User ID not found in token.");
             }
             var userId = userIdClaim.Value;
-            var user = await _userManager.Users.Where(u => u.Id == userId).Select(u => new UserInfoDto
+            var user = await _userManager.Users.Where(u => u.Id == userId).Select(u => new UserProfile
             {
                 Id = u.Id,
                 FullName = u.FirstName + " " + u.LastName,
@@ -244,13 +288,18 @@ namespace NanhiDuniya.Service.Services
                 Bio = u.Bio,
                 UserName = u.UserName,
                 ProfilePictureUrl = u.ProfilePictureUrl,
-                AccessToken = accessToken,
             }).FirstOrDefaultAsync();
+            var response = new GetUserProfileResponse
+            {
+                Success = true,
+                userProfile = user,
+                Message = "UserProfile  Fetched Succesfully"
+            };
             if (user == null)
             {
                 throw new KeyNotFoundException("User Not Found");
             }
-            return user;
+            return response;
         }
         #endregion
 
@@ -284,7 +333,7 @@ namespace NanhiDuniya.Service.Services
 
             if (result.Succeeded)
             {
-                return new ResultResponse { IsSuccess = true, Message = "Password reset successfully." };
+                return new ResultResponse { Success = true, Message = "Password reset successfully." };
             }
             else
             {
@@ -303,10 +352,10 @@ namespace NanhiDuniya.Service.Services
                 TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
             if (!result)
             {
-                return new ResultResponse { IsSuccess = false, Message = "Token Expired" };
+                return new ResultResponse { Success = false, Message = "Token Expired" };
             }
 
-            return new ResultResponse { IsSuccess = true };
+            return new ResultResponse { Success = true };
         }
         private async Task<ApplicationUser?> FindUserByEmail(string? email)
         {

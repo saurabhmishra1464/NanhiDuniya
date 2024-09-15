@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
+using Azure;
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -11,9 +13,11 @@ using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 using NanhiDuniya.Core.Utilities;
 using NanhiDuniya.Data.Entities;
 using Newtonsoft.Json.Linq;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Runtime;
@@ -91,30 +95,27 @@ namespace NanhiDuniya.Service.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<LoginResponse> VerifyRefreshToken(string refreshToken,string userName)
+        public async Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken,string userName)
         {
-            
-            //var tokenContent = jwtSecurityTokenHandler.ReadJwtToken(request.Token);
-            //var userId = tokenContent.Claims.ToList().FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Sub)?.Value;
-
-            //_logger.LogError("Verifying refresh token for user ID: {UserId}", userId);
             var user = await _userManager.FindByEmailAsync(userName);
             var storedToken = await _tokenRepository.GetRefreshTokenAsync(refreshToken);
             if (storedToken == null || storedToken.RefreshToken != refreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
             {
-                throw new UnauthorizedAccessException();
+                return new RefreshTokenResponse
+                {
+                    Success = false,
+                    Message = "Invalid refresh token"
+                };
             }
             var accessToken = await GenerateAccessToken(userName,storedToken.UserId);
-         
-            return new LoginResponse
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", accessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)) });
+            return new RefreshTokenResponse
             {
-                AccessToken = accessToken,
-                RefreshToken = storedToken.RefreshToken,
-                UserId = storedToken.UserId,
-                UserName = user.UserName
+                Success = true,
+                Message = "Token refreshed successfully",
             };
         }
-        public async Task RevokeRefreshToken(string userId)
+        public async Task<LogoutResponse> RevokeRefreshToken(string userId)
         {
             var tokensToRevoke = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
             if (tokensToRevoke == null || tokensToRevoke.Count == 0)
@@ -127,6 +128,7 @@ namespace NanhiDuniya.Service.Services
                 token.IsRevoked = true;
             }
             await _tokenRepository.UpdateRefreshTokenAsync(tokensToRevoke);
+            return new LogoutResponse { Success = true, Message = "Logout successful" };
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)

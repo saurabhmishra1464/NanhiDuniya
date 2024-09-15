@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,8 +17,8 @@ namespace NanhiDuniya.Service.Mapping
             CreateMap<RegistrationRequestDto, RegisterModel>();
             CreateMap<LoginRequestDto,LoginModel>();
             CreateMap<LoginResponse, LoginResponseResource>();
-            CreateMap<LoginResponse, UserRefreshToken>()
-    .ForSourceMember(login => login.AccessToken, login => login.DoNotValidate());
+            CreateMap<LoginResponse, UserRefreshToken>();
+    //.ForSourceMember(login => login.AccessToken, login => login.DoNotValidate());
            
         }
     }

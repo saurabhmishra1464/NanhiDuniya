@@ -7,9 +7,9 @@ import React from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AppProviders from "@/context/AppProviders";
-import { SessionProvider } from "next-auth/react";
-import { AuthProvider } from "@/context/AuthProvider";
-
+import { Provider } from "react-redux";
+import StoreProvider from "./StoreProvider";
+import { store } from "@/store/store";
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -19,14 +19,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body suppressHydrationWarning={true}>
-        <AuthProvider>
+      <Provider store={store}>
         <AppProviders>
           <div className="dark:bg-boxdark-2 dark:text-bodydark">
             {children}
           </div>
           <ToastContainer />
         </AppProviders>
-        </AuthProvider>
+        </Provider>
       </body>
     </html>
   );

@@ -11,26 +11,46 @@ import LoginError from "@/app/auth/error";
 import { toast } from "react-toastify";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEye, faEyeSlash } from '@fortawesome/free-solid-svg-icons';
-import { login } from "@/app/actions/auth";
 import { z } from "zod";
-import { useAuth } from "@/context/AuthProvider";
+import { unwrapResult } from "@reduxjs/toolkit";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/store/store";
+import { useLoginUserMutation } from "@/services/auth";
+import { handleError } from "@/utils/ErrorHandelling/errorHandler";
 
 export default function SignIn() {
- 
+  
+  const [
+    loginUser, 
+    {
+     isLoading
+    }
+  ] = useLoginUserMutation();
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loginError, setLoginError] = useState("");
-  type loginUser = z.infer<typeof LoginFormValidation>
-  const { register, handleSubmit, watch, formState: { errors }, reset } = useForm<loginUser>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<z.infer<typeof LoginFormValidation>>({
     resolver: zodResolver(LoginFormValidation),
   });
   const password = watch('password');
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
-  const {login,loading} = useAuth();
-  const onSubmit = async (data: z.infer<typeof LoginFormValidation>) => {
-    const result = await login(data.userName, data.password);
+  const onSubmit = async (loginForm: z.infer<typeof LoginFormValidation>) => {
+    try{
+    const userData = await loginUser(loginForm);
+    if (userData.data?.success) {
+      toast.success(userData.data.message);
+      router.push("/admin/dashboard");
+    } else{
+      toast.error(userData.data?.message);
+    }
+  }
+  catch(err:any){
+    let message = handleError(err);
+    setLoginError(message);
+    toast.error(message || "Login failed!");
+  }
   }
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -144,9 +164,9 @@ export default function SignIn() {
               <button
                 type="submit"
                 className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
-                disabled={loading}
+                disabled={isLoading}
               >
-                {loading ? 'Logging In...' : 'Log In'}
+                {isLoading ? 'Logging In...' : 'Log In'}
               </button>
               <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                 <span>

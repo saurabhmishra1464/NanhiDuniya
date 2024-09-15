@@ -19,7 +19,7 @@ namespace NanhiDuniya.Core.Resources.AccountDtos
         public string Email { get; set; }
         public string? Bio { get; set; }
         public string? ProfilePictureUrl { get; set; }
-        public string? AccessToken { get; set; }
+        public List<string>? Roles { get; set;}
         
     }
 }

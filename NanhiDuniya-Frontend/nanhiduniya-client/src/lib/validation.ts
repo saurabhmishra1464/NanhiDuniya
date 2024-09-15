@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+const SafeString = (schema: z.ZodString = z.string()) => 
+    schema.refine(
+      (value) => !/(<script|javascript:)/i.test(value),
+      {
+        message: "Input contains potentially unsafe content"
+      }
+    );
+
 export const ResetPasswordFormValidation = z.object({
     newPassword: z
         .string()
@@ -34,8 +42,8 @@ export const LoginFormValidation = z.object({
 });
 
 export const PersonalInfoValidation = z.object({
-    fullName: z.string().min(2, "Full name must be at least 2 characters")
-        .max(50, "Full name must be at most 50 characters"),
+    fullName: SafeString( z.string().min(2, "Full name must be at least 2 characters")
+        .max(50, "Full name must be at most 50 characters")),
     email: z.string().email("Invalid email address"),
     phoneNumber: z.string().transform((phone) => {
         // Add +91 if it is not already present

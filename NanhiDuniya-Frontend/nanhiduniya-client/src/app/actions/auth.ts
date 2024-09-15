@@ -3,28 +3,21 @@ import { LoginFormValidation } from "@/lib/validation"
 import { redirect } from 'next/navigation';
 import { z } from "zod";
 import { handleError } from "@/utils/ErrorHandelling/errorHandler";
-import  axiosInstance  from "@/utils/AxiosInstances/api";
 import axios from "axios";
+import { axiosPrivate } from "@/utils/AxiosInstances/api";
+import { parseStringify } from "@/lib/utils";
 
 type loginUser = z.infer<typeof LoginFormValidation>
 
-export async function login(data: loginUser) {
-  try {
-    const response = await axios.post('http://localhost:5001/api/Account/Login', {
-      email: data.userName,
-      password: data.password,
-    },{withCredentials: true});
 
-    if (response?.status === 200) {
-      console.log(response);
-      return { success: true, message: "Login Successful" };
-    } else {
-      return { success: false, errors: response.data };
-    }
+
+
+export const logoutAccount = async (userId: string) => {
+  try {
+  await axiosPrivate.post('/api/Account/RevokeRefreshToken', { userId: userId});
   } catch (error) {
-    console.log(error);
-    const message = handleError(error as Error);
-    return { success: false, errors: message };
+    return null;
   }
 }
+
 

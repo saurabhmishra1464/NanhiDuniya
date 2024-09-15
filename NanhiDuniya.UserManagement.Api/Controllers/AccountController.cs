@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using Azure.Core;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
@@ -34,7 +36,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         private readonly IPasswordService _passwordService;
         private readonly ITokenService _tokenService;
         private readonly IImageService _imageService;
-        public AccountController(IAccountService accountService,  IImageService imageService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
+        public AccountController(IAccountService accountService, IImageService imageService, IPasswordService passwordService, ITokenService tokenService, IMapper mapper, ILogger<AccountController> logger)
         {
             _accountService = accountService;
             _passwordService = passwordService;
@@ -53,7 +55,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
 
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
 
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 _logger.LogInformation("User registered successfully: {Email}", model.Email);
                 return Ok(new ApiResponse(StatusCodes.Status201Created, result.Message));
@@ -74,7 +76,7 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
 
             var result = await _accountService.Register(_mapper.Map<RegisterModel>(model));
 
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 _logger.LogInformation("Admin registered successfully: {Email}", model.Email);
                 return Ok(new ApiResponse(StatusCodes.Status201Created, result.Message));
@@ -103,17 +105,13 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> LoginApi([FromBody] LoginModel model)
         {
-                 var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-                if (result == null)
-                {
-                    _logger.LogWarning("Login attempt failed for user: {Username}", model.Email);
-                    throw new UnauthorizedAccessException("Invalid login credentials.");
-                }
-                Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append("X-Username", result.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-                Response.Cookies.Append("X-Refresh-Token", result.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-
-                return Ok();
+            var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
+            if (result == null)
+            {
+                _logger.LogWarning("Login attempt failed for user: {Username}", model.UserName);
+                throw new UnauthorizedAccessException("Invalid login credentials.");
+            }
+            return Ok(result);
         }
 
 
@@ -135,44 +133,47 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         public async Task<IActionResult> Refresh()
         {
             if (!(Request.Cookies.TryGetValue("X-Username", out var userName) && Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
-                return BadRequest();
+                throw new ArgumentNullException();
 
             var result = await _tokenService.VerifyRefreshToken(refreshToken, userName);
-           
-            Response.Cookies.Append("X-Access-Token", result.AccessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("X-Username", result.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-            Response.Cookies.Append("X-Refresh-Token", result.RefreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
 
-            return Ok();
+            return Ok(result);
         }
 
-        [Authorize(Roles = UserRoles.Admin)]
-        [HttpPost("RevokeRefreshToken")]
-        public async Task<IActionResult> RevokeRefreshToken([FromBody] RevokeRefreshTokenRequest revokeRefreshTokenRequest)
+        [HttpGet("check-auth")]
+        [Authorize]
+        public IActionResult CheckAuth()
         {
-            try
-            {
-                await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInformation("Failed to revoke refresh token.", ex);
-                throw new FailedToRevokeRefreshToken("Failed to revoke refresh token.", ex);
-            }
-            return Ok();
+            var userClaims = User.Claims.Select(c => new { c.Type, c.Value }).ToList();
+            return Ok(new {Success=true, message = "User is authenticated", claims = userClaims });
+        }
+
+
+
+        [HttpPost("RevokeRefreshToken")]
+        [Authorize]
+        public async Task<IActionResult> RevokeRefreshToken(RevokeRefreshTokenRequest revokeRefreshTokenRequest)
+        {
+            var result = await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
+
+            Response.Cookies.Delete("X-Access-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            Response.Cookies.Delete("X-Username", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            Response.Cookies.Delete("X-Refresh-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+
+            return Ok(result);
         }
 
         [HttpPost("ResetPassword")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
             var tokenValidationResult = await _accountService.ValidateResetToken(model.Token, model.Email);
-            if (!tokenValidationResult.IsSuccess)
+            if (!tokenValidationResult.Success)
             {
                 throw new ArgumentException("The provided token is invalid. Please check and try again.");
             }
             var result = await _accountService.ResetPassword(model);
 
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 _logger.LogInformation("Password reset successfully for user: {Email}", model.Email);
                 return Ok(new ApiResponse(StatusCodes.Status200OK, result.Message));
@@ -221,10 +222,10 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         public async Task<IActionResult> UploadProfilePicture(UploadProfilePictureDto upload)
         {
             var result = await _imageService.SaveImageAsync(upload);
-            if (result.IsSuccess)
+            if (result.Success)
             {
                 _logger.LogInformation("Image Uploaded Successfully");
-                return Ok(new ApiResponse(StatusCodes.Status200OK, result.Message));
+                return Ok(result);
             }
             _logger.LogError("Image Upload failed for user {Id}: {ErrorMessage}"/*,upload.Id*/, result.Message);
             throw new FailedToUpdate("Image Upload failed.");

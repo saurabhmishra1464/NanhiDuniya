@@ -101,7 +101,7 @@ builder.Services.AddAuthentication(options =>
      })
      .AddCookie(options =>
      {
-      options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+      options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
       options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
       options.Cookie.IsEssential = true;
      });
@@ -154,7 +154,15 @@ app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 //app.UseMiddleware<JwtFromCookieMiddleware>();
 app.UseHttpsRedirection();
-
+//app.Use(async (context, next) =>
+//{
+//    context.Response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
+//    context.Response.Headers.Add("Content-Security-Policy", "frame-ancestors 'none'");
+//    context.Response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+//    context.Response.Headers.Add("X-Content-Type-Options", "nosniff");
+//    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+//    await next();
+//});
 app.UseCors("CorsPolicy");
 app.UseCookiePolicy();
 app.UseAuthentication();
