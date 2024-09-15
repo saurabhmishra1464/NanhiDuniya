@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Azure;
+using Microsoft.AspNetCore.Http;
 using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.UserManagement.Api.Extentions;
 using NanhiDuniya.UserManagement.Api.Middleware;

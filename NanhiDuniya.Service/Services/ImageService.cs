@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 using NanhiDuniya.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -21,13 +22,13 @@ namespace NanhiDuniya.Service.Services
         {
             _userManager = userManager;
         }
-        public async Task<ResultResponse> SaveImageAsync(UploadProfilePictureDto upload)
+        public async Task<UploadImageResponse> SaveImageAsync(UploadProfilePictureDto upload)
         {
             if (upload.formFile == null || upload.formFile.Length == 0)
             {
                 throw new ArgumentException("File is empty,Please attach Image.");
             }
-            ResultResponse resultResponse = new();
+            UploadImageResponse resultResponse = new();
             var user = await _userManager.FindByIdAsync(upload.Id);
             if(user == null)
             {
@@ -44,8 +45,9 @@ namespace NanhiDuniya.Service.Services
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    resultResponse.Message = "Image Uploaded Uploaded Successfully";
-                    resultResponse.IsSuccess = true;
+                    resultResponse.Message = "Image Uploaded Successfully";
+                    resultResponse.Success = true;
+                    resultResponse.ProfilePictureUrl = profilePictureUrl;
                 }
                 else
                 {

@@ -9,7 +9,7 @@ export const axiosPublic = axios.create({
 
 export const axiosPrivate = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
-  headers: { 'Content-Type': 'application/json' },
+  // headers: { 'Content-Type': 'application/json' },
   withCredentials: true
 });
 
@@ -19,13 +19,14 @@ axiosPrivate.interceptors.response.use(
       const prevRequest = error?.config;
       if (error?.response?.status === 401 && !prevRequest?.sent) {
           prevRequest.sent = true;
-          await refresh();
+         const response = await refresh();
+         console.log("refreshsdhsdhsdh", response);
           return axiosPrivate(prevRequest);
       }
       return Promise.reject(error);
   }
 );
 
-const refresh = async () => {
+ const refresh = async () => {
   await axiosPublic.get('/api/Account/refresh');
-}
+ }

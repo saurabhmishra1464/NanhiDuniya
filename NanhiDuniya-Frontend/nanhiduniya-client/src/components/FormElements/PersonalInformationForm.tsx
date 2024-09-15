@@ -1,48 +1,64 @@
 'use client'
 
-import useUser from '@/hooks/useUsers';
 import { PersonalInfoValidation } from '@/lib/validation';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSession } from 'next-auth/react';
-import React, { useEffect } from 'react'
-import { FieldValues, useForm } from 'react-hook-form';
+import React, {useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import useSWR from 'swr';
-import { axiosPrivate } from '@/utils/AxiosInstances/api';
+import { z } from 'zod';
+import { handleError } from '@/utils/ErrorHandelling/errorHandler';
+import { useAppDispatch, useAppSelector } from '@/hooks/hooks';
+import { useUpdateUserMutation } from '@/services/auth';
 function PersonalInformationForm() {
-    // const { auth } = useAuth();
-    const { register, handleSubmit, formState: { errors }, setValue } = useForm({
+    const { user } = useAppSelector((state) => state.auth);
+    const [
+        updateUser,
+        {
+            isLoading: isUpdating, error
+        }
+    ] = useUpdateUserMutation();
+    console.log(error);
+    const [isLoading, setIsLoading] = useState(true);
+    const dispatch = useAppDispatch();
+    const { register, handleSubmit, formState: { errors }, setValue } = useForm<z.infer<typeof PersonalInfoValidation>>({
         resolver: zodResolver(PersonalInfoValidation),
     });
-    const { user, isLoading,mutate } = useUser();
+
+
+
     useEffect(() => {
         if (user) {
-            setValue('fullName', user?.fullName);
-            setValue('phoneNumber', user.phoneNumber);
-            setValue('email', user.email);
-            setValue('bio', user.bio);
-            setValue('userName', user.userName);
+            setValue('fullName', user.fullName || '');
+            setValue('phoneNumber', user.phoneNumber || '');
+            setValue('email', user.email || '');
+            setValue('userName', user.userName || '');
+            setValue('bio', user.bio || '');
+            setIsLoading(false); 
         }
-    }, [user, setValue]);
-    
+    }, [user]);
 
-    const onSubmit = async (data: FieldValues) => {
+
+    const onSubmit = async (data: z.infer<typeof PersonalInfoValidation>) => {
         debugger
         try {
-            const payLoad = { ...data, Id: user.id };
-            const response = await axiosPrivate.put('/api/Account/UpdateUser', payLoad);
-            if (response?.status === 200) {
-                 mutate();
-                toast.success('Personal Information Updated successfully');
+            const payLoad = { ...data, Id: user?.id || '' };
+            const userData = await updateUser(payLoad);
+            if (userData.data?.success) {
+                toast.success(userData.data.message);
             }
+            else{
+                toast.error(userData.data?.message);
+              }
         } catch (error: any) {
-            toast.error(error.message);
+            let message = handleError(error);
+            toast.error(message);
         }
+    };
 
-    }
-    if (isLoading) {
+    if (isUpdating || isLoading) {
         return (
             <div className="col-span-5 xl:col-span-3">
                 <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -119,7 +135,7 @@ function PersonalInformationForm() {
                             <div className="w-full sm:w-1/2">
                                 <label
                                     className="mb-3 block text-sm font-medium text-black dark:text-white"
-                                
+
                                 >
                                     Phone Number
                                 </label>
@@ -137,7 +153,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                            
+
                             >
                                 Email Address
                             </label>
@@ -179,7 +195,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                               
+
                             >
                                 Username
                             </label>
@@ -187,7 +203,7 @@ function PersonalInformationForm() {
                                 className="w-full rounded border border-stroke bg-gray px-4.5 py-3 text-black focus:border-primary focus-visible:outline-none dark:border-strokedark dark:bg-meta-4 dark:text-white dark:focus:border-primary"
                                 type="text"
                                 {...register("userName")}
-                                
+
                             />
                             {errors?.userName && (<span className='text-red-500 text-sm mt-2'>{`${errors?.userName?.message}`}</span>)}
                         </div>
@@ -195,7 +211,7 @@ function PersonalInformationForm() {
                         <div className="mb-5.5">
                             <label
                                 className="mb-3 block text-sm font-medium text-black dark:text-white"
-                        
+
                             >
                                 BIO
                             </label>

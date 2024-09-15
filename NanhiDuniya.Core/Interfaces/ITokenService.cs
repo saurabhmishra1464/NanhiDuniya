@@ -1,5 +1,6 @@
 ﻿using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Resources.AccountDtos;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,8 @@ namespace NanhiDuniya.Service.Services
     {
         Task<String> GenerateRefreshToken();
         Task<string> GenerateAccessToken(string email, string userId);
-        Task RevokeRefreshToken(string userId);
-        Task<LoginResponse> VerifyRefreshToken(string refreshToken, string userName);
+        Task<LogoutResponse> RevokeRefreshToken(string userId);
+        Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken, string userName);
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
         bool HasTokenExpired(string token);
