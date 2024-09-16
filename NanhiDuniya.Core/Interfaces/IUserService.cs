@@ -9,6 +9,6 @@ namespace NanhiDuniya.Core.Interfaces
 {
     public interface IUserService
     {
-        string GeneratePasswordResetLink(UserDto user, string token);
+        string GenerateVerifyEmailLink(UserDto user, string token);
     }
 }

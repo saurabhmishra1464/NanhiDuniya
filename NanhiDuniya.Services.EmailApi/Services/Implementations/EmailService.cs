@@ -82,6 +82,7 @@ namespace NanhiDuniya.Services.EmailApi.Services.Implementations
             //var mailboxaddress = message.ToList.Select(address => new MailboxAddress(address)).ToList();
             var mailboxAddresses = request.ToList.Select(address => new MailboxAddress(string.Empty, address)).ToList();
             emailMessage.To.AddRange(mailboxAddresses);
+            emailMessage.Cc.AddRange(request.CcList.Select(cc => new MailboxAddress(string.Empty, cc)).ToList());
             emailMessage.Subject = request.Subject;
             var bodyBuilder = new BodyBuilder { HtmlBody = request.HtmlBody };
             var image = bodyBuilder.LinkedResources.Add(imagePath);

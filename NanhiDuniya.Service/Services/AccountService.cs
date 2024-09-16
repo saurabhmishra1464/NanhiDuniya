@@ -190,12 +190,12 @@ namespace NanhiDuniya.Service.Services
                 {
                     await _userManager.AddToRoleAsync(user, UserRoles.Parent);
                 }
-                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                // Customize the email template and send reset link
+                // Customize the email template and send verify email link
 
-                var resetLink = _userService.GeneratePasswordResetLink(new UserDto { Email = user.Email }, token);
-                _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, resetLink, null, null, "RegistrationSuccesful", user.Email);
+                var verifyEmailLink = _userService.GenerateVerifyEmailLink(new UserDto { Email = user.Email }, token);
+                _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, verifyEmailLink, null, null, "VerifyEmail", user.Email);
 
                 return new ResultResponse
                 {
@@ -351,6 +351,22 @@ namespace NanhiDuniya.Service.Services
             var result = await _userManager.VerifyUserTokenAsync(user,
                 TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
             if (!result)
+            {
+                return new ResultResponse { Success = false, Message = "Token Expired" };
+            }
+
+            return new ResultResponse { Success = true };
+        }
+
+        public async Task<ResultResponse> ConfirmEmail(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ResultResponse { Message = "User Not Found." }; // User not found
+            }
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
             {
                 return new ResultResponse { Success = false, Message = "Token Expired" };
             }

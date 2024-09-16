@@ -50,7 +50,7 @@ namespace NanhiDuniya.Service.Services
             var request = new NanhiDuniyaEmailRequest()
             {
                 ToList = toList,
-                CcList = new List<string> { "ccuser@example.com" }, // Add CC addresses if needed
+                CcList = new List<string> { "saurabhmishra1464@gmail.com" }, // Add CC addresses if needed
                 From = _defaultFromAddress,
                 Subject = subject,
                 TemplateName = templateName,

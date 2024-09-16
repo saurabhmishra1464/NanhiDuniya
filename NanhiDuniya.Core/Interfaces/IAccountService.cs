@@ -19,5 +19,6 @@ namespace NanhiDuniya.Core.Interfaces
         Task<ResultResponse> ValidateResetToken(string resetToken, string Email);
         Task<UpdateUserResponse> PutUserAsync(UserInfoDto userInfo);
         Task<GetUserProfileResponse> GetUser(string userId);
+        Task<ResultResponse> ConfirmEmail(string token, string email);
     }
 }
