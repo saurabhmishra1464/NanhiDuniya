@@ -183,6 +183,25 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
             throw new InvalidOperationException("Unable to complete the password reset due to a conflict.");
         }
 
+        [HttpGet("Verify-Email")]
+        public async Task<IActionResult> VerifyEmail(string token, string email)
+        {
+            var tokenValidationResult = await _accountService.ConfirmEmail(token, email);
+            if (!tokenValidationResult.Success)
+            {
+                throw new ArgumentException("The provided token is invalid. Please check and try again.");
+            }
+            //var result = await _accountService.ResetPassword(model);
+            if (tokenValidationResult.Success)
+            {
+                _logger.LogInformation("Email Confirmed for user: {Email}", email);
+                return Ok(new ApiResponse(StatusCodes.Status200OK, tokenValidationResult.Message));
+            }
+
+            _logger.LogError("Confirm email for user {Email}: {ErrorMessage}", email, tokenValidationResult.Message);
+            throw new InvalidOperationException("Unable to complete the verify  email due to a conflict.");
+        }
+
 
         #endregion
 

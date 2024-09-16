@@ -10,7 +10,7 @@ import type { NextRequest } from 'next/server';
 //   // Add other protected routes here
 // ];
 
-export const PublicRotes = ['/auth/login','/signup','/forgot-password'];
+export const PublicRotes = ['/auth/login','/signup','/forgot-password','/auth/verifyEmail'];
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;

@@ -15,13 +15,22 @@ namespace NanhiDuniya.Service.Services
             _configuration = configuration;
         }
 
-        public string GeneratePasswordResetLink(UserDto user, string token)
+        public string GenerateResetPasswordLink(UserDto user, string token)
         {
             var frontendUrl = _configuration["BaseUrls:Frontend"];
             var encodedToken = HttpUtility.UrlEncode(token);
             var encodedEmail = HttpUtility.UrlEncode(user.Email);
 
             return $"{frontendUrl}/auth/resetpassword?token={encodedToken}&email={encodedEmail}";
+        }
+
+        public string GenerateVerifyEmailLink(UserDto user, string token)
+        {
+            var frontendUrl = _configuration["BaseUrls:Frontend"];
+            var encodedToken = HttpUtility.UrlEncode(token);
+            var encodedEmail = HttpUtility.UrlEncode(user.Email);
+
+            return $"{frontendUrl}/auth/verifyEmail?token={encodedToken}&email={encodedEmail}";
         }
     }
 
