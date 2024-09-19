@@ -1,14 +1,18 @@
 ﻿namespace NanhiDuniya.UserManagement.Api.Extentions
 {
-    public class ApiResponse
+    public class ApiResponse<T>
     {
-        public int StatusCode { get; }
-        public string Message { get; }
+        public bool Success { get; set; }
+        public string Message { get; set; }
+        public T Data { get; set; }
+        public int StatusCode { get; set; }
 
-        public ApiResponse(int statusCode, string? message = null)
+        public ApiResponse(bool success, string message, T data, int statusCode)
         {
+            Success = success;
+            Message = message;
+            Data = data;
             StatusCode = statusCode;
-            Message = message ?? GetDefaultMessageForStatusCode(statusCode);
         }
 
         private static string GetDefaultMessageForStatusCode(int statusCode)
@@ -43,6 +47,5 @@
                     return null;
             }
         }
-
     }
 }

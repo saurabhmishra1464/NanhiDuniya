@@ -25,15 +25,14 @@ namespace NanhiDuniya.Services.EmailApi.Controllers
           
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Validation failed."));
+                //return BadRequest(new ApiResponse<object>(StatusCodes.Status400BadRequest));
             }
 
             bool result = await _emailService.SendEmailAsync(emailRequest);
-            if (result)
-            {
-                return Ok(new ApiResponse(StatusCodes.Status200OK, "Email sent successfully."));
-            }
-            return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "Failed to send email."));
+
+                return Ok(new ApiResponse<object>(true, "Email sent successfully.",null,StatusCodes.Status200OK,null));
+            
+            
 
         }
 

@@ -20,6 +20,7 @@ using Newtonsoft.Json.Linq;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Numerics;
 using System.Runtime;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -59,6 +60,26 @@ namespace NanhiDuniya.Service.Services
 
             return refreshToken;
         }
+
+        public async Task<string> GenerateConfirmEmailToken(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return null;
+            }
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+
+        public async Task<string> GenerateResetPasswordToken(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return null;
+            }
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
         private string GenerateRandomString()
         {
             var randomBytes = new byte[64];
@@ -95,32 +116,25 @@ namespace NanhiDuniya.Service.Services
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken,string userName)
+        public async Task<ApiResponse<object>> VerifyRefreshToken()
         {
-            var user = await _userManager.FindByEmailAsync(userName);
+            if (!(_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("X-Username", out var userName) && _httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
+                return new ApiResponse<object>(false, "Missing authentication information. Please log in again.", null, StatusCodes.Status400BadRequest, null);
             var storedToken = await _tokenRepository.GetRefreshTokenAsync(refreshToken);
             if (storedToken == null || storedToken.RefreshToken != refreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
             {
-                return new RefreshTokenResponse
-                {
-                    Success = false,
-                    Message = "Invalid refresh token"
-                };
+                return new ApiResponse<object>(false, "Invalid or expired Refreshtoken. Please log in again.", null, StatusCodes.Status404NotFound, null);
             }
-            var accessToken = await GenerateAccessToken(userName,storedToken.UserId);
+            var accessToken = await GenerateAccessToken(userName, storedToken.UserId);
             _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", accessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)) });
-            return new RefreshTokenResponse
-            {
-                Success = true,
-                Message = "Token refreshed successfully",
-            };
+            return new ApiResponse<object>(true, "Token refreshed successfully.", null, StatusCodes.Status200OK, null);
         }
-        public async Task<LogoutResponse> RevokeRefreshToken(string userId)
+        public async Task<ApiResponse<object>> RevokeRefreshToken(string userId)
         {
             var tokensToRevoke = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
             if (tokensToRevoke == null || tokensToRevoke.Count == 0)
             {
-                throw new KeyNotFoundException($"No refresh tokens found for user");
+                return new ApiResponse<object>(false, "No refresh tokens found for user.", null, StatusCodes.Status404NotFound, null);
             }
 
             foreach (var token in tokensToRevoke)
@@ -128,7 +142,10 @@ namespace NanhiDuniya.Service.Services
                 token.IsRevoked = true;
             }
             await _tokenRepository.UpdateRefreshTokenAsync(tokensToRevoke);
-            return new LogoutResponse { Success = true, Message = "Logout successful" };
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Access-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Username", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Refresh-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
+            return new ApiResponse<object>(true, "Logout Succesfully Completed.", null, StatusCodes.Status200OK, null);
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)
@@ -148,7 +165,7 @@ namespace NanhiDuniya.Service.Services
             return await _userManager.FindByIdAsync(userId!);
         }
 
-        public  bool HasTokenExpired(string token)
+        public bool HasTokenExpired(string token)
         {
             if (string.IsNullOrEmpty(token))
             {

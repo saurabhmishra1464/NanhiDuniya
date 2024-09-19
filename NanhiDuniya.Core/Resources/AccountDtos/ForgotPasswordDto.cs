@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace NanhiDuniya.Core.Resources.AccountDtos
 {
-    public class RevokeRefreshTokenRequest
+    public class ForgotPasswordDto
     {
-        public string UserId { get; set; }
+        public string Email { get; set; }
     }
-
 }

@@ -11,6 +11,8 @@ using System.Text;
 using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Core.Utilities;
+using Microsoft.AspNetCore.Mvc;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
@@ -51,7 +53,17 @@ builder.Services.AddSwaggerGen(options => {
         }
     });
 });
-
+builder.Services.Configure<ApiBehaviorOptions>(o =>
+{
+    o.InvalidModelStateResponseFactory = actionContext =>
+    {
+        var res = new ApiResponse<object>(false, "One or more validation errors occurred.", null, StatusCodes.Status400BadRequest, actionContext.ModelState.Values
+            .SelectMany(v => v.Errors)
+            .Select(e => e.ErrorMessage)
+            .ToArray());
+        return new ObjectResult(res);
+    };
+});
 //Sql Server Setup
 builder.Services.AddDbContext<NanhiDuniyaDbContext>(options =>options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 

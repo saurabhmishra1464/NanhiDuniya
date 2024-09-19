@@ -14,10 +14,12 @@ namespace NanhiDuniya.Service.Services
     {
         Task<String> GenerateRefreshToken();
         Task<string> GenerateAccessToken(string email, string userId);
-        Task<LogoutResponse> RevokeRefreshToken(string userId);
-        Task<RefreshTokenResponse> VerifyRefreshToken(string refreshToken, string userName);
+        Task<ApiResponse<object>> RevokeRefreshToken(string userId);
+        Task<ApiResponse<object>> VerifyRefreshToken();
         Task AddRefreshTokenAsync(UserRefreshToken refreshToken);
         Task DeleteRefreshTokenAsync(UserRefreshToken refreshToken);
         bool HasTokenExpired(string token);
+        Task<string> GenerateConfirmEmailToken(string email);
+        Task<string> GenerateResetPasswordToken(string email);
     }
 }

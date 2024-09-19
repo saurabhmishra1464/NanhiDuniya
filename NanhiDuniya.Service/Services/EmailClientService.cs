@@ -64,7 +64,6 @@ namespace NanhiDuniya.Service.Services
         public async Task<bool> SendEmailAsync(NanhiDuniyaEmailRequest request)
         {
             var response = await _httpClient.SendAsync(CreateMessage(request));
-            Console.Write(response.ToString());
             // Ensure success status code
             if (response.IsSuccessStatusCode)
             {

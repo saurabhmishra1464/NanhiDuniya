@@ -21,14 +21,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using NanhiDuniya.Core.Resources.ResponseDtos;
+using NanhiDuniya.Core.Models.Exceptions;
+using System.Net;
 
 namespace NanhiDuniya.Service.Services
 {
@@ -79,62 +79,51 @@ namespace NanhiDuniya.Service.Services
         #endregion
 
         #region Authentication Token/Login
-        public async Task<LoginResponse> Login(LoginModel loginDto)
+        public async Task<ApiResponse<UserProfile>> Login(LoginModel loginDto)
         {
             var user = await _userManager.FindByEmailAsync(loginDto.UserName);
 
             if (user == null)
             {
                 _logger.LogWarning($"User with email {loginDto.UserName} was not found");
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "User doesn't exist! Please register first"
-                };
+                return new ApiResponse<UserProfile>(false, "User doesn't exist! Please register first", null, StatusCodes.Status404NotFound, null);
+
             }
 
             bool isValidUser = await _userManager.CheckPasswordAsync(user, loginDto.Password);
             if (!isValidUser)
             {
-                return new LoginResponse
-                {
-                    Success = false,
-                    Message = "Incorrect password! Please try again"
-                };
+                return new ApiResponse<UserProfile>(false, "Incorrect Password", null, StatusCodes.Status401Unauthorized, null);
             }
 
             var roles = await _userManager.GetRolesAsync(user);
             var token = await _tokenService.GenerateAccessToken(user.Email, user.Id);
             var refreshToken = await _tokenService.GenerateRefreshToken();
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", token, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry))});
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry))});
-            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Refresh-Token", refreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry))});
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", token, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)) });
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Username", user.UserName, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry)) });
+            _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Refresh-Token", refreshToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddHours(Convert.ToInt32(_jwtService.RefreshTokenExpiry)) });
 
-            var loginResponse = new LoginResponse
+
+            var loggedInUser = new UserProfile
             {
-                Success = true,
-                Message = "Logged in successfully",
-                User = new UserProfile
-                {
-                    Id = user.Id,
-                    FullName = user.FirstName +" "+ user.LastName,
-                    UserName = user.UserName,
-                    PhoneNumber = user.PhoneNumber,
-                    Email = user.Email,
-                    Bio = user.Bio,
-                    ProfilePictureUrl = user.ProfilePictureUrl,
-                    Roles = roles.ToList(),
-                }
+                Id = user.Id,
+                FullName = user.FirstName + " " + user.LastName,
+                UserName = user.UserName,
+                PhoneNumber = user.PhoneNumber,
+                Email = user.Email,
+                Bio = user.Bio,
+                ProfilePictureUrl = user.ProfilePictureUrl,
+                Roles = roles.ToList(),
             };
 
             var userRefreshToken = new UserRefreshToken
             {
-                RefreshToken = refreshToken, 
-                UserId = user.Id,             
-                IsRevoked = false             
+                RefreshToken = refreshToken,
+                UserId = user.Id,
+                IsRevoked = false
             };
             await _tokenService.AddRefreshTokenAsync(userRefreshToken);
-            return loginResponse;
+            return new ApiResponse<UserProfile>(true, "LoggedIn SuccesFully", loggedInUser, StatusCodes.Status200OK, null);
         }
 
 
@@ -142,7 +131,7 @@ namespace NanhiDuniya.Service.Services
 
         #region User Registration methods
 
-        public async Task<ResultResponse> Register(RegisterModel model)
+        public async Task<ApiResponse<object>> Register(RegisterModel model)
         {
             // Initialize a ResultResponse object to store the registration result.
             // Check if a user with the same email already exists.
@@ -151,84 +140,65 @@ namespace NanhiDuniya.Service.Services
             // If a user with the same email exists, return a response indicating user already exists.
             if (userExists != null)
             {
-                return new ResultResponse { Message = "User already exists!" };
+                throw new UserAlreadyExistsException("User already exists!");
             }
             var user = BuildUserFromRegistrationModel(model);
             var result = await CreateUserAsync(user, model.Password);
 
-            if (result.Succeeded)
+            //Add User Roles
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
+
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Student))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Student));
+
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Teacher))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Teacher));
+
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Parent))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Parent));
+
+            if (await _roleManager.RoleExistsAsync(UserRoles.Admin) && model.Role == UserRoles.Admin)
             {
-                //Add User Roles
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
-
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Student))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Student));
-
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Teacher))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Teacher));
-
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Parent))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Parent));
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Admin) && model.Role == UserRoles.Admin)
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Admin);
-                }
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Student) && model.Role == UserRoles.Student)
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Student);
-                }
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Teacher) && model.Role == UserRoles.Teacher)
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Teacher);
-                }
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Parent) && model.Role == UserRoles.Parent)
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Parent);
-                }
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-
-                // Customize the email template and send verify email link
-
-                var verifyEmailLink = _userService.GenerateVerifyEmailLink(new UserDto { Email = user.Email }, token);
-                _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, verifyEmailLink, null, null, "VerifyEmail", user.Email);
-
-                return new ResultResponse
-                {
-                    Success = true,
-                    Message = "User registered successfully!"
-                };
-
+                await _userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
 
-            return new ResultResponse
+            if (await _roleManager.RoleExistsAsync(UserRoles.Student) && model.Role == UserRoles.Student)
             {
-                Message = BuildErrorMessage(result.Errors),
-                Success = false
-            };
+                await _userManager.AddToRoleAsync(user, UserRoles.Student);
+            }
+
+            if (await _roleManager.RoleExistsAsync(UserRoles.Teacher) && model.Role == UserRoles.Teacher)
+            {
+                await _userManager.AddToRoleAsync(user, UserRoles.Teacher);
+            }
+
+            if (await _roleManager.RoleExistsAsync(UserRoles.Parent) && model.Role == UserRoles.Parent)
+            {
+                await _userManager.AddToRoleAsync(user, UserRoles.Parent);
+            }
+            var token = await _tokenService.GenerateConfirmEmailToken(user.Email);
+
+            // Customize the email template and send verify email link
+
+            var verifyEmailLink = _userService.GenerateVerifyEmailLink(user.Email, token);
+            _ = _emailClient.SendEmailAsync("Registration Successful", model.FirstName, verifyEmailLink, null, null, "VerifyEmail", user.Email);
+            _logger.LogInformation("User registered successfully: {Email}", model.Email);
+            return new ApiResponse<object>(true, "User Registered Succesfully", null, StatusCodes.Status200OK, null);
         }
 
         #endregion
 
         #region Update User
-        public async Task<UpdateUserResponse> PutUserAsync(UserInfoDto userInfoDto)
+        public async Task<ApiResponse<UserProfile>> PutUserAsync(UserInfoDto userInfoDto)
         {
             var user = await _userManager.FindByIdAsync(userInfoDto.Id);
 
             if (user == null)
             {
-                _logger.LogError("User doesn't exist: {Id}", userInfoDto.Id);
-                return new UpdateUserResponse
-                {
-                    Message = "User doesn't exist",
-                };
+                return new ApiResponse<UserProfile>(false, "User not found", null, StatusCodes.Status404NotFound, null);
             }
-            //var uploadDirectory = Path.Combine(_storagePath);
-            //var resultImage = await _imageService.SaveImageAsync(userInfoDto.ProfilePicture, uploadDirectory);
+
             var names = userInfoDto.FullName?.Split(' ') ?? new string[0];
             if (names.Length > 0)
             {
@@ -240,43 +210,30 @@ namespace NanhiDuniya.Service.Services
             user.Bio = userInfoDto.Bio;
 
             var result = await _userManager.UpdateAsync(user);
-            if (result.Succeeded)
-            {
-                _logger.LogInformation("User Info Updated SuccesFully: {Id}", userInfoDto.Id);
-                return new UpdateUserResponse
+            if(!result.Succeeded) { return new ApiResponse<UserProfile>(false, "Failed to update user profile. Please try again or contact support if the problem persists.", null, StatusCodes.Status400BadRequest, null); }
+
+                var userProfile = new UserProfile
                 {
-                    Message = "Successfully updated",
-                    Success = true,
-                    userProfile = new UserProfile
-                    {
-                     Id = user.Id,
-                     FullName = user.FirstName + user.LastName,
-                     UserName = user.UserName,
-                     PhoneNumber = user.PhoneNumber,
-                     Email = user.Email,
-                     Bio = user.Bio,
-                     ProfilePictureUrl = user.ProfilePictureUrl,
-                    },
+                    Id = user.Id,
+                    FullName = user.FirstName + user.LastName,
+                    UserName = user.UserName,
+                    PhoneNumber = user.PhoneNumber,
+                    Email = user.Email,
+                    Bio = user.Bio,
+                    ProfilePictureUrl = user.ProfilePictureUrl,
                 };
-
-            }
-
-            _logger.LogError("Error while updating the user personal info: {Id}", userInfoDto.Id, result);
-            return new UpdateUserResponse
-            {
-                Message = "Something went wrong",
-                Success = false,
-            };
+                return new ApiResponse<UserProfile>(true, "User Updated Successfully", userProfile, StatusCodes.Status200OK, null);
         }
 
-        public async Task<GetUserProfileResponse> GetUser(string accessToken)
+        public async Task<ApiResponse<UserProfile>> GetUser()
         {
+            var accessToken = _httpContextAccessor.HttpContext.Request.Cookies["X-Access-Token"];
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(accessToken);
             var userIdClaim = jwtSecurityToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier); // "sub" is a common claim type for user ID
             if (userIdClaim == null)
             {
-                throw new ArgumentException("User ID not found in token.");
+                return new ApiResponse<UserProfile>(false, "UserIdClaim is not found in token", null, StatusCodes.Status404NotFound, null);
             }
             var userId = userIdClaim.Value;
             var user = await _userManager.Users.Where(u => u.Id == userId).Select(u => new UserProfile
@@ -289,17 +246,7 @@ namespace NanhiDuniya.Service.Services
                 UserName = u.UserName,
                 ProfilePictureUrl = u.ProfilePictureUrl,
             }).FirstOrDefaultAsync();
-            var response = new GetUserProfileResponse
-            {
-                Success = true,
-                userProfile = user,
-                Message = "UserProfile  Fetched Succesfully"
-            };
-            if (user == null)
-            {
-                throw new KeyNotFoundException("User Not Found");
-            }
-            return response;
+            return new ApiResponse<UserProfile>(true, "UserProfile Fetched Succesfully", user, StatusCodes.Status200OK, null);
         }
         #endregion
 
@@ -321,58 +268,6 @@ namespace NanhiDuniya.Service.Services
                 PhoneNumber = model.PhoneNumber,
             };
         }
-        public async Task<ResultResponse> ResetPassword(ResetPasswordDto model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-            {
-                return new ResultResponse { Message = "User not found." };
-            }
-
-            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
-
-            if (result.Succeeded)
-            {
-                return new ResultResponse { Success = true, Message = "Password reset successfully." };
-            }
-            else
-            {
-                return new ResultResponse { Message = "Failed to reset password." };
-            }
-        }
-        public async Task<ResultResponse> ValidateResetToken(string token, string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return new ResultResponse { Message = "User Not Found." }; // User not found
-            }
-
-            var result = await _userManager.VerifyUserTokenAsync(user,
-                TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
-            if (!result)
-            {
-                return new ResultResponse { Success = false, Message = "Token Expired" };
-            }
-
-            return new ResultResponse { Success = true };
-        }
-
-        public async Task<ResultResponse> ConfirmEmail(string token, string email)
-        {
-            var user = await _userManager.FindByEmailAsync(email);
-            if (user == null)
-            {
-                return new ResultResponse { Message = "User Not Found." }; // User not found
-            }
-            var result = await _userManager.ConfirmEmailAsync(user, token);
-            if (!result.Succeeded)
-            {
-                return new ResultResponse { Success = false, Message = "Token Expired" };
-            }
-
-            return new ResultResponse { Success = true };
-        }
         private async Task<ApplicationUser?> FindUserByEmail(string? email)
         {
             // Logic to find a user by email using the user manager
@@ -381,6 +276,80 @@ namespace NanhiDuniya.Service.Services
         private string BuildErrorMessage(IEnumerable<IdentityError> errors)
         {
             return string.Join(", ", errors.Select(error => error.Description));
+        }
+
+        #endregion
+
+        #region Token
+
+        public async Task<ApiResponse<object>> ForgotPassword(string email)
+        {
+            var token = await _tokenService.GenerateResetPasswordToken(email);
+            if (token == null)
+            {
+                return new ApiResponse<object>(false, "User Not Found", null, StatusCodes.Status404NotFound, null);
+            }
+            var generatedLink = _userService.GenerateResetPasswordLink(email, token);
+            _ = _emailClient.SendEmailAsync("Forgot Password", "", generatedLink, null, null, "ResetPassword", email);
+
+            return new ApiResponse<object>(true, "Reset password link generated successfully", null, StatusCodes.Status200OK, null);
+        }
+        public async Task<ApiResponse<object>> ResetPassword(ResetPasswordDto model)
+        {
+            var tokenValidationResult = await ValidResetToken(model.Token, model.Email);
+            if (!tokenValidationResult)
+            {
+                return new ApiResponse<object>(false, "The provided token is invalid. Please check and try again.", null, StatusCodes.Status400BadRequest, null);
+            }
+            var user = await _userManager.FindByEmailAsync(model.Email);
+            if (user == null)
+            {
+                return new ApiResponse<object>(false, "User not found.", null, StatusCodes.Status404NotFound, null);
+            }
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Token, model.NewPassword);
+
+            if (result.Succeeded)
+            {
+                return new ApiResponse<object>(true, "Password reset successfully completed.", null, StatusCodes.Status200OK, null);
+            }
+            else
+            {
+                return new ApiResponse<object>(false, "Failed to reset password.", null, StatusCodes.Status500InternalServerError, null);
+
+            }
+        }
+        public async Task<bool> ValidResetToken(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return false; // User not found
+            }
+
+            var result = await _userManager.VerifyUserTokenAsync(user,
+                TokenOptions.DefaultProvider, UserManager<ApplicationUser>.ResetPasswordTokenPurpose, token);
+            if (!result)
+            {
+                return false;
+            }
+
+            return true;
+        }
+        public async Task<ApiResponse<object>> ConfirmEmail(string token, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return new ApiResponse<object>(false, "User Not Found", null, StatusCodes.Status404NotFound, null); // User not found
+            }
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded)
+            {
+                return new ApiResponse<object>(false, "Email confirmation token has expired. Please request a new confirmation email.", null, StatusCodes.Status410Gone, null);
+            }
+
+            return new ApiResponse<object>(true, "Email confirmation succesfully completed.", null, StatusCodes.Status200OK, null);
         }
 
         #endregion

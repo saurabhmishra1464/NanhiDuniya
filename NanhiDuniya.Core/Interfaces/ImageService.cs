@@ -12,7 +12,7 @@ namespace NanhiDuniya.Core.Interfaces
 {
     public interface IImageService
     {
-        Task<UploadImageResponse> SaveImageAsync(UploadProfilePictureDto uploadProfilePictureDto);
+        Task<ApiResponse<UploadImageResponse>> SaveImageAsync(UploadProfilePictureDto uploadProfilePictureDto);
 
     }
 }
