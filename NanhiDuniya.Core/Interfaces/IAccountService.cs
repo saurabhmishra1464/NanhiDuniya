@@ -13,12 +13,13 @@ namespace NanhiDuniya.Core.Interfaces
 {
     public interface IAccountService
     {
-        Task<LoginResponse> Login(LoginModel model);
-        Task<ResultResponse> Register(RegisterModel model);
-        Task<ResultResponse> ResetPassword(ResetPasswordDto resetPasswordDto);
-        Task<ResultResponse> ValidateResetToken(string resetToken, string Email);
-        Task<UpdateUserResponse> PutUserAsync(UserInfoDto userInfo);
-        Task<GetUserProfileResponse> GetUser(string userId);
-        Task<ResultResponse> ConfirmEmail(string token, string email);
+        Task<ApiResponse<UserProfile>> Login(LoginModel model);
+        Task<ApiResponse<object>> Register(RegisterModel model);
+        Task<ApiResponse<object>> ResetPassword(ResetPasswordDto resetPasswordDto);
+        Task<bool> ValidResetToken(string resetToken, string Email);
+        Task<ApiResponse<UserProfile>> PutUserAsync(UserInfoDto userInfo);
+        Task<ApiResponse<UserProfile>> GetUser();
+        Task<ApiResponse<object>> ConfirmEmail(string token, string email);
+        Task<ApiResponse<object>> ForgotPassword(string email);
     }
 }

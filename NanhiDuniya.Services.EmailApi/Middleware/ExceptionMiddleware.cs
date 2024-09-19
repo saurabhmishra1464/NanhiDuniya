@@ -64,10 +64,9 @@ namespace NanhiDuniya.Services.EmailApi.Middleware
                     break;
             }
 
-            var apiResponse = new ApiResponse((int)statusCode, errorMessage);
             context.Response.StatusCode = (int)statusCode;
-            string response = JsonConvert.SerializeObject(apiResponse);
-            return context.Response.WriteAsync(response);
+            var response = new ApiResponse<object>(false, errorMessage, null, context.Response.StatusCode,null);
+            return context.Response.WriteAsync(JsonConvert.SerializeObject(response));
         }
     }
 

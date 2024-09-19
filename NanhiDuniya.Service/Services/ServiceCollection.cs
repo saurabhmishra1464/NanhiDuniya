@@ -39,26 +39,6 @@ namespace NanhiDuniya.Service.Services
             services.AddSingleton<IPasswordService, PasswordService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IImageService, ImageService>();
-            services.Configure<ApiBehaviorOptions>(o =>
-            {
-                o.InvalidModelStateResponseFactory = actionContext =>
-                {
-                    var res = new ResponseDTO
-                    {
-                        Message = "One or more validation errors occurred.",
-                        StatusCode = HttpStatusCode.BadRequest,
-                        // Add additional properties or data from ModelState if needed
-                        Errors = actionContext.ModelState.Values
-                        .SelectMany(v => v.Errors)
-                        .Select(e => e.ErrorMessage)
-                        .ToArray()
-                    };
-                    return new ObjectResult(res)
-                    {
-                        StatusCode = (int)HttpStatusCode.BadRequest,
-                    };
-                };
-            });
             return services;
         }
     }

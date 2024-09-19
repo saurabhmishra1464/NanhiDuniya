@@ -18,23 +18,23 @@ namespace NanhiDuniya.Service.Services
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly string _storagePath;
-        public ImageService(UserManager<ApplicationUser> userManager) 
+        public ImageService(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
         }
-        public async Task<UploadImageResponse> SaveImageAsync(UploadProfilePictureDto upload)
+        public async Task<ApiResponse<UploadImageResponse>> SaveImageAsync(UploadProfilePictureDto upload)
         {
             if (upload.formFile == null || upload.formFile.Length == 0)
             {
-                throw new ArgumentException("File is empty,Please attach Image.");
+                return new ApiResponse<UploadImageResponse>(false, "File is empty,Please attach Image.", null, StatusCodes.Status400BadRequest, null);
             }
             UploadImageResponse resultResponse = new();
             var user = await _userManager.FindByIdAsync(upload.Id);
-            if(user == null)
+            if (user == null)
             {
-                throw new KeyNotFoundException("User Not Found");
+                return new ApiResponse<UploadImageResponse>(false, "User not found.", null, StatusCodes.Status404NotFound, null);
             }
-            
+
             using (var memoryStream = new MemoryStream())
             {
                 await upload.formFile.CopyToAsync(memoryStream);
@@ -43,20 +43,10 @@ namespace NanhiDuniya.Service.Services
                 var profilePictureUrl = $"data:{upload.formFile.ContentType};base64,{base64String}";
                 user.ProfilePictureUrl = profilePictureUrl;
                 var result = await _userManager.UpdateAsync(user);
-                if (result.Succeeded)
-                {
-                    resultResponse.Message = "Image Uploaded Successfully";
-                    resultResponse.Success = true;
-                    resultResponse.ProfilePictureUrl = profilePictureUrl;
-                }
-                else
-                {
-                    resultResponse.Message = "Something went wrong while uploading Image";
-                }
-
+                if (!result.Succeeded) { return new ApiResponse<UploadImageResponse>(false, "Failed to update Image. Please try again or contact support if the problem persists.", null, StatusCodes.Status400BadRequest, null); }
+                resultResponse.ProfilePictureUrl = profilePictureUrl;
+                return new ApiResponse<UploadImageResponse>(true, "Image Uploaded Successfully", resultResponse, StatusCodes.Status200OK, null);
             }
-
-            return resultResponse;
         }
     }
 }

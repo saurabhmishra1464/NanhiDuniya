@@ -9,51 +9,16 @@ using System.Threading.Tasks;
 
 namespace NanhiDuniya.Core.Resources.ResponseDtos
 {
-    public class ResponseDTO
-    {
-        public bool OperationSuccess { get; set; }
-        public string? Message { get; set; }
-        public object? Data { get; set; }
-        public HttpStatusCode StatusCode { get; set; }
-        public object? Errors { get; set; }
-    }
 
-    public class ResultResponse
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; }
-    }
-
-    public class LoginResponse: ResultResponse
+    public class LoginResponse
     {
         public UserProfile User { get; set; }
         //public bool IsEmailConfirmed { get; set; }
     }
 
-    public class RefreshTokenResponse: ResultResponse
-    {
-
-
-    }
-
-    public class LogoutResponse: ResultResponse
-    {
-
-    }
-
-    public class GetUserProfileResponse: ResultResponse
-    {
-        public UserProfile userProfile { get; set; }
-    }
-
-    public class UploadImageResponse : ResultResponse
+    public class UploadImageResponse
     {
         public string? ProfilePictureUrl { get; set; }
-    }
-
-    public class UpdateUserResponse: ResultResponse
-    {
-      public UserProfile userProfile { get; set; }
     }
 
     public class UserProfile

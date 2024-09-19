@@ -37,7 +37,7 @@ namespace NanhiDuniya.UserManagement.APi.Middleware
         {
             context.Response.ContentType = "application/json";
             HttpStatusCode statusCode = HttpStatusCode.InternalServerError;
-            var errorMessage = "An unexpected error occurred. Please try again later.";
+            var errorMessage = "Something Went Wrong. Please try again later.";
             switch (ex)
             {
                 case NotImplementedException _:
@@ -73,15 +73,18 @@ namespace NanhiDuniya.UserManagement.APi.Middleware
                     statusCode = HttpStatusCode.BadRequest;  // Or another appropriate status code
                     errorMessage = regsitrationFailed.Message;
                     break;
+                case UserAlreadyExistsException _:
+                    statusCode = HttpStatusCode.Conflict;
+                    errorMessage = "User already exists.";
+                    break;
                 default:
                     statusCode = HttpStatusCode.InternalServerError;
                     break;
             }
-
-            var apiResponse = new ApiResponse((int)statusCode, errorMessage);
             context.Response.StatusCode = (int)statusCode;
-            string response = JsonConvert.SerializeObject(apiResponse);
-            return context.Response.WriteAsync(response);
+            var response = new ApiResponse<object>(false, errorMessage, null, context.Response.StatusCode);
+            return context.Response.WriteAsync(JsonConvert.SerializeObject(response));
         }
+    
     }
 }
