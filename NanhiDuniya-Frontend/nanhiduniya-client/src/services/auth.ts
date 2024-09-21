@@ -1,5 +1,6 @@
 import { LoginFormValidation, PersonalInfoValidation } from '@/lib/validation'
-import { getUserProfileResponse, LogoutResponse, RevokeRefreshTokenRequest, uploadImageResponse } from '@/model/Responses/AuthResponse'
+import { ApiResponse } from '@/model/Responses/ApiResponse'
+import { LogoutResponse, RevokeRefreshTokenRequest, uploadImageResponse, UserProfile } from '@/model/Responses/AuthResponse'
 import { baseQueryWithReauth } from '@/utils/fetchBaseQuery'
 import { 
   createApi, 
@@ -13,7 +14,7 @@ export const authApi = createApi({
   tagTypes: ["UserManagement"],
   endpoints: (builder) => ({
 
-    loginUser: builder.mutation<getUserProfileResponse,z.infer<typeof LoginFormValidation>>({
+    loginUser: builder.mutation<ApiResponse<UserProfile>,z.infer<typeof LoginFormValidation>>({
       query: (user) => ({
         url: '/api/Account/Login',
         method: 'POST',
@@ -21,12 +22,12 @@ export const authApi = createApi({
       }),
     }),
 
-    getUserProfile: builder.query<getUserProfileResponse, void>({
+    getUserProfile: builder.query<ApiResponse<UserProfile>, void>({
       query: () => '/api/Account/me',
       providesTags: ["UserManagement"],
     }),
 
-    updateUser: builder.mutation<getUserProfileResponse, z.infer<typeof PersonalInfoValidation>>({
+    updateUser: builder.mutation<ApiResponse<UserProfile>, z.infer<typeof PersonalInfoValidation>>({
       query:(user) =>({
         url: 'api/Account/UpdateUser',
         method: "PUT",
@@ -35,7 +36,7 @@ export const authApi = createApi({
       invalidatesTags: ["UserManagement"],
     }),
 
-    uploadImage: builder.mutation<uploadImageResponse, FormData>({
+    uploadImage: builder.mutation<ApiResponse<uploadImageResponse>, FormData>({
       query:(userImage) =>({
         url: 'api/Account/UploadProfilePicture',
         method: "POST",

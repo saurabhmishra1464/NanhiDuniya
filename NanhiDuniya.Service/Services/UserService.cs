@@ -21,7 +21,7 @@ namespace NanhiDuniya.Service.Services
             var encodedToken = HttpUtility.UrlEncode(token);
             var encodedEmail = HttpUtility.UrlEncode(email);
 
-            return $"{frontendUrl}/auth/resetpassword?token={encodedToken}&email={encodedEmail}";
+            return $"{frontendUrl}/auth/resetPassword?token={encodedToken}&email={encodedEmail}";
         }
 
         public string GenerateVerifyEmailLink(string email, string token)

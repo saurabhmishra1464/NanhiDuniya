@@ -9,6 +9,8 @@ import { useModal } from "@/context/ModalProvider";
 import { ModalTypes } from "@/enums/modalTypes";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faKey, faUserCircle } from "@fortawesome/free-solid-svg-icons";
 
 const DropdownUser = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -19,7 +21,7 @@ const DropdownUser = () => {
     if(user){
       setIsLoading(false);
     }
-  })
+  },[user])
 
 if(isLoading){
   return (
@@ -48,13 +50,15 @@ if(isLoading){
         </span>
 
         <span className="h-14 w-14 rounded-full">
-          <Image
+         
+          {user?.profilePictureUrl ? ( 
+            <Image
             width={55}
             height={55}
-            src={user?.profilePictureUrl || ''}
+            src={user?.profilePictureUrl}
             alt="User"
             className="rounded-full h-full w-full"
-          />
+          />):( <FontAwesomeIcon icon={faUserCircle} size="3x" />)}
         </span>
 
         <svg
@@ -80,7 +84,7 @@ if(isLoading){
           className={`absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark`}
         >
           <ul className="flex flex-col gap-5 border-b border-stroke px-6 py-7.5 dark:border-strokedark">
-            <li>
+            <li className="flex flex-col gap-3.5">
               <Link
                 href="/settings"
                 className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
@@ -103,6 +107,13 @@ if(isLoading){
                   />
                 </svg>
                 Account Settings
+              </Link>
+              <Link 
+                href="/resetPassword" 
+                className="flex items-center gap-3.5 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+              >
+                <FontAwesomeIcon icon={faKey} className="w-5 h-5" />
+                Reset Password
               </Link>
             </li>
           </ul>

@@ -7,6 +7,8 @@ import { toast } from 'react-toastify';
 import { handleError } from '@/utils/ErrorHandelling/errorHandler';
 import { useAppSelector } from '@/hooks/hooks';
 import { useUploadImageMutation } from '@/services/auth';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 const UploadImage = () => {
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting }, } = useForm();
   const [
@@ -15,7 +17,7 @@ const UploadImage = () => {
       isLoading: isUploading
     }
   ] = useUploadImageMutation();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user } = useSelector((state: RootState) => state.auth);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -24,7 +26,7 @@ const UploadImage = () => {
     if (watchFile && watchFile.length > 0) {
       const file = watchFile[0];
       const previewUrl = URL.createObjectURL(file);
-      console.log("reviewurl", previewUrl);
+
       setImagePreview(previewUrl);
 
       return () => URL.revokeObjectURL(previewUrl);  // Cleanup to avoid memory leaks
@@ -37,7 +39,7 @@ const UploadImage = () => {
     if (user) {
       setIsLoading(false);
     }
-  })
+  },[user]);
 
   const onSubmit = async (data: FieldValues) => {
     try {

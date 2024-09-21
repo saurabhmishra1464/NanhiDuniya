@@ -20,7 +20,7 @@ function PersonalInformationForm() {
             isLoading: isUpdating, error
         }
     ] = useUpdateUserMutation();
-    console.log(error);
+
     const [isLoading, setIsLoading] = useState(true);
     const dispatch = useAppDispatch();
     const { register, handleSubmit, formState: { errors }, setValue } = useForm<z.infer<typeof PersonalInfoValidation>>({
@@ -38,7 +38,7 @@ function PersonalInformationForm() {
             setValue('bio', user.bio || '');
             setIsLoading(false); 
         }
-    }, [user]);
+    }, [user, setValue]);
 
 
     const onSubmit = async (data: z.infer<typeof PersonalInfoValidation>) => {
