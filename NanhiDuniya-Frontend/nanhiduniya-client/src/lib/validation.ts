@@ -9,6 +9,7 @@ const SafeString = (schema: z.ZodString = z.string()) =>
     );
 
 export const ResetPasswordFormValidation = z.object({
+  
     newPassword: z
         .string()
         .min(8, { message: "Password must be at least 8 characters long" })

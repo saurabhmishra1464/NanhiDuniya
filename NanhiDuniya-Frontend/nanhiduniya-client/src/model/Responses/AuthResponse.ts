@@ -1,8 +1,8 @@
-export interface getUserProfileResponse {
-    success: boolean;
-    userProfile: UserProfile;
-    message: string;
-}
+// export interface getUserProfileResponse {
+//     success: boolean;
+//     userProfile: UserProfile;
+//     message: string;
+// }
 
 export interface UserProfile {
     id: string;
@@ -25,7 +25,5 @@ export interface RevokeRefreshTokenRequest{
 }
 
 export interface uploadImageResponse {
-    success: boolean;
-    message: string;
     profilePictureUrl: string;
 }

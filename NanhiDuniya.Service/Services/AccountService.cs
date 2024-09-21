@@ -119,6 +119,8 @@ namespace NanhiDuniya.Service.Services
             var userRefreshToken = new UserRefreshToken
             {
                 RefreshToken = refreshToken,
+                Expires = DateTime.UtcNow.AddDays(_jwtService.RefreshTokenExpiry),
+                Created = DateTime.UtcNow,
                 UserId = user.Id,
                 IsRevoked = false
             };

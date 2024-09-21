@@ -27,7 +27,7 @@ export default function RootLayout({
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        dispatch(setUser(user.userProfile));  // Set user in store
+        dispatch(setUser(user.data));  // Set user in store
       } else {
         dispatch(logOut());   // Clear user from store
       }

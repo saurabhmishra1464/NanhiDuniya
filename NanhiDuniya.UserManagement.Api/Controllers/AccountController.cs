@@ -82,7 +82,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         }
 
         [HttpPost("forgot-password")]
-        [Authorize]
         public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
         {
             var resetPassword = await _accountService.ForgotPassword(forgotPasswordDto.Email);
@@ -116,7 +115,6 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         }
 
         [HttpPost("ResetPassword")]
-        [Authorize]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
         {
             var result = await _accountService.ResetPassword(model);

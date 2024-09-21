@@ -8,7 +8,6 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AppProviders from "@/context/AppProviders";
 import { Provider } from "react-redux";
-import StoreProvider from "./StoreProvider";
 import { store } from "@/store/store";
 export default function RootLayout({
   children,
@@ -24,7 +23,7 @@ export default function RootLayout({
           <div className="dark:bg-boxdark-2 dark:text-bodydark">
             {children}
           </div>
-          <ToastContainer />
+          <ToastContainer    style={{ top: '100px' }} />
         </AppProviders>
         </Provider>
       </body>

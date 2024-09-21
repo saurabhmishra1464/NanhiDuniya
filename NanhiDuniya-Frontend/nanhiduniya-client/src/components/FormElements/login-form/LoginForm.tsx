@@ -19,11 +19,11 @@ import { useLoginUserMutation } from "@/services/auth";
 import { handleError } from "@/utils/ErrorHandelling/errorHandler";
 
 export default function SignIn() {
-  
+
   const [
-    loginUser, 
+    loginUser,
     {
-     isLoading
+      isLoading
     }
   ] = useLoginUserMutation();
   const [showPassword, setShowPassword] = useState(false);
@@ -37,20 +37,20 @@ export default function SignIn() {
     setShowPassword(!showPassword);
   };
   const onSubmit = async (loginForm: z.infer<typeof LoginFormValidation>) => {
-    try{
-    const userData = await loginUser(loginForm);
-    if (userData.data?.success) {
-      toast.success(userData.data.message);
-      router.push("/admin/dashboard");
-    } else{
-      toast.error(userData.data?.message);
+    try {
+      const userData = await loginUser(loginForm);
+      if (userData.data?.success) {
+        toast.success(userData.data.message);
+        router.push("/admin/dashboard");
+      } else {
+        toast.error(userData.data?.message);
+      }
     }
-  }
-  catch(err:any){
-    let message = handleError(err);
-    setLoginError(message);
-    toast.error(message || "Login failed!");
-  }
+    catch (err: any) {
+      let message = handleError(err);
+      setLoginError(message);
+      toast.error(message || "Login failed!");
+    }
   }
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
@@ -160,7 +160,11 @@ export default function SignIn() {
                   errors?.password && (<span className='text-red text-sm mt-1'>{`${errors.password.message}`}</span>)
                 }
               </div>
-
+              <div className="mb-6 text-right">
+                <Link href="/auth/forgotPassword" className="text-sm text-primary hover:underline">
+                  Forgot Password?
+                </Link>
+              </div>
               <button
                 type="submit"
                 className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
@@ -204,6 +208,7 @@ export default function SignIn() {
                 </span>
                 Login in with Google
               </button>
+
               {loginError && <LoginError message={loginError} />}
             </form>
           </div>
