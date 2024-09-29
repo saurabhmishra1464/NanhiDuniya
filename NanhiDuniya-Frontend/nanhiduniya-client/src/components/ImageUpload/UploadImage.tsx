@@ -9,6 +9,8 @@ import { useAppSelector } from '@/hooks/hooks';
 import { useUploadImageMutation } from '@/services/auth';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faUserCircle } from '@fortawesome/free-solid-svg-icons';
 const UploadImage = () => {
   const { register, handleSubmit, setValue, watch, reset, formState: { errors, isSubmitting }, } = useForm();
   const [
@@ -127,15 +129,16 @@ const UploadImage = () => {
                     alt="User"
                     className="rounded-full h-full w-full"
                   />
-                ) : (
-                  <Image
-                    src={user?.profilePictureUrl || '/images/user/user-01.png'}
+                ) : user?.profilePictureUrl ?
+                  ( 
+                    <Image
                     width={55}
                     height={55}
+                    src={user?.profilePictureUrl}
                     alt="User"
                     className="rounded-full h-full w-full"
-                  />
-                )}
+                  />):( <FontAwesomeIcon icon={faUserCircle} size="3x" />)}
+                
               </div>
               <div>
                 <span className="mb-1.5 text-black dark:text-white">

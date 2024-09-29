@@ -17,6 +17,7 @@ using NanhiDuniya.Core.Models.Exceptions;
 using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Data.Entities;
 using NanhiDuniya.Data.Repositories;
+using NanhiDuniya.MessageBus;
 using NanhiDuniya.Service.Services;
 using NanhiDuniya.UserManagement.Api.Extentions;
 using NanhiDuniya.UserManagement.Api.Middleware;
@@ -127,6 +128,13 @@ namespace NanhiDuniya.UserManagement.Api.Controllers
         {
             var verifyEmailResult = await _accountService.ConfirmEmail(token, email);
             return Ok(verifyEmailResult);
+        }
+
+        [HttpPost("SendConfirmationEmail")]
+        public async Task<IActionResult> SendConfirmationEmail(ResendEmailDto resendEmailDto)
+        {
+            var result = await _accountService.SendConfirmationEmail(resendEmailDto.Email);
+            return Ok(result);
         }
 
 

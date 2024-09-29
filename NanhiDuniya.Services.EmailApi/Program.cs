@@ -1,6 +1,13 @@
+
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OpenApi.Models;
+using NanhiDuniya.MessageBus;
+using NanhiDuniya.MessageBus.MassTransit;
+using NanhiDuniya.MessageBus.SQL;
 using NanhiDuniya.Services.EmailApi.Configurations;
+using NanhiDuniya.Services.EmailApi.Entities;
 using NanhiDuniya.Services.EmailApi.Extentions;
 using NanhiDuniya.Services.EmailApi.Middleware;
 using NanhiDuniya.Services.EmailApi.Resources;
@@ -10,10 +17,15 @@ using Serilog;
 using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
-
+var configuration = builder.Configuration;
 // Add services to the container.
 
 builder.Services.AddControllers();
+//builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+//builder.Services.AddScoped(typeof(IRepository<>), typeof(SqlRepository<>));
+
+// Register MassTransit with RabbitMQ
+builder.Services.AddMassTransitWithRabbitMq();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 
@@ -59,17 +71,21 @@ builder.Services.Configure<ApiBehaviorOptions>(o =>
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
+//builder.Services.AddMassTransitWithRabbitMq(builder.Configuration);
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll",
-        b => b.AllowAnyHeader()
-            .AllowAnyOrigin()
-            .AllowAnyMethod());
+    options.AddPolicy("AllowFrontend",
+        builder => builder
+            .WithOrigins("http://localhost:7777")  // Allow requests from frontend
+            .AllowAnyHeader()                     // Allow headers like Authorization
+            .AllowAnyMethod()                     // Allow GET, POST, PUT, etc.
+            .AllowCredentials());                 // Allow cookies (if needed)
 });
 
 
 
 var app = builder.Build();
+app.UseCors("AllowFrontend");
 app.UseMiddleware<ExceptionMiddleware>();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -79,9 +95,7 @@ if (app.Environment.IsDevelopment())
 }
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();

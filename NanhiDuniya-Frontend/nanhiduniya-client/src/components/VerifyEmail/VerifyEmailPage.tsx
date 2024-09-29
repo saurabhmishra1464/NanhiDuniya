@@ -11,10 +11,12 @@ const VerifyEmailPage = () => {
     const [message, setMessage] = useState({ type: '', text: '' });
 
     useEffect(() => {
+        debugger
         const token = searchParams?.get('token') || '';
         const email = searchParams?.get('email') || '';
 
         const verifyEmail = async () => {
+            debugger
             if (!token) {
                 setMessage({ type: 'error', text: 'Email verification token not found!' });
                 setLoading(false);

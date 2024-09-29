@@ -1,7 +1,7 @@
 ﻿using Azure;
 using Microsoft.AspNetCore.Http;
 using NanhiDuniya.Core.Models.Exceptions;
-using NanhiDuniya.UserManagement.Api.Extentions;
+using NanhiDuniya.Core.Resources.ResponseDtos;
 using NanhiDuniya.UserManagement.Api.Middleware;
 using Newtonsoft.Json;
 using System;

@@ -5,6 +5,7 @@ using NanhiDuniya.Core.Interfaces;
 using NanhiDuniya.Core.Models;
 using NanhiDuniya.Core.Resources.AccountDtos;
 using NanhiDuniya.Core.Resources.ResponseDtos;
+using NanhiDuniya.Core.Utilities;
 using NanhiDuniya.Data.Entities;
 using System;
 using System.Collections.Generic;
@@ -26,13 +27,13 @@ namespace NanhiDuniya.Service.Services
         {
             if (upload.formFile == null || upload.formFile.Length == 0)
             {
-                return new ApiResponse<UploadImageResponse>(false, "File is empty,Please attach Image.", null, StatusCodes.Status400BadRequest, null);
+                return ApiResponseHelper.CreateErrorResponse<UploadImageResponse>("File is empty,Please attach Image.", StatusCodes.Status400BadRequest);
             }
             UploadImageResponse resultResponse = new();
             var user = await _userManager.FindByIdAsync(upload.Id);
             if (user == null)
             {
-                return new ApiResponse<UploadImageResponse>(false, "User not found.", null, StatusCodes.Status404NotFound, null);
+                return ApiResponseHelper.CreateErrorResponse<UploadImageResponse>("User not found.", StatusCodes.Status404NotFound);
             }
 
             using (var memoryStream = new MemoryStream())
@@ -43,9 +44,9 @@ namespace NanhiDuniya.Service.Services
                 var profilePictureUrl = $"data:{upload.formFile.ContentType};base64,{base64String}";
                 user.ProfilePictureUrl = profilePictureUrl;
                 var result = await _userManager.UpdateAsync(user);
-                if (!result.Succeeded) { return new ApiResponse<UploadImageResponse>(false, "Failed to update Image. Please try again or contact support if the problem persists.", null, StatusCodes.Status400BadRequest, null); }
+                if (!result.Succeeded) { return ApiResponseHelper.CreateErrorResponse<UploadImageResponse>("Failed to update Image. Please try again or contact support if the problem persists.",StatusCodes.Status400BadRequest);}
                 resultResponse.ProfilePictureUrl = profilePictureUrl;
-                return new ApiResponse<UploadImageResponse>(true, "Image Uploaded Successfully", resultResponse, StatusCodes.Status200OK, null);
+                return ApiResponseHelper.CreateSuccessResponse<UploadImageResponse>(resultResponse, "Image Uploaded Successfully");
             }
         }
     }
