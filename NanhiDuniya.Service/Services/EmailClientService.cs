@@ -31,85 +31,77 @@ namespace NanhiDuniya.Service.Services
             _env = env ?? throw new ArgumentNullException(nameof(env));
             _logger = logger;
         }
+        //public async Task<bool> SendEmailAsync(string subject,string firstname,string resetLink, string? templateName, string toEmail)
+        //{
+        //    //if (toList == null || toList.Count == 0)
+        //    //{
+        //    //    if (string.IsNullOrWhiteSpace(to))
+        //    //    {
+        //    //        throw new ArgumentException("Either to or toList must be specified");
+        //    //    }
+        //    //    toList ??= new List<string>();
+        //    //    toList.Add(to);
+        //    //}
+  
 
-        public async Task<bool> SendEmailAsync(string subject,string firstname,string resetLink, string? htmlBody = null, string? plainTextBody = null, string? templateName = null, string? to = null, List<string>? toList = null)
-        {
-            if (toList == null || toList.Count == 0)
-            {
-                if (string.IsNullOrWhiteSpace(to))
-                {
-                    throw new ArgumentException("Either to or toList must be specified");
-                }
-                toList ??= new List<string>();
-                toList.Add(to);
-            }
-            var templatePath = Path.Combine(_env.ContentRootPath, "Templates", $"{templateName}.html");
+        //    var htmlBody = LoadHtmlTemplate(templatePath,resetLink,firstname, toEmail);
 
-            htmlBody = LoadHtmlTemplate(templatePath,resetLink,firstname,to);
-
-            var request = new NanhiDuniyaEmailRequest()
-            {
-                ToList = toList,
-                CcList = new List<string> { "saurabhmishra1464@gmail.com" }, // Add CC addresses if needed
-                From = _defaultFromAddress,
-                Subject = subject,
-                TemplateName = templateName,
-                HtmlBody = htmlBody,
-            };
-
-
-            return await SendEmailAsync(request);
-        }
-
-        public async Task<bool> SendEmailAsync(NanhiDuniyaEmailRequest request)
-        {
-            var response = await _httpClient.SendAsync(CreateMessage(request));
-            // Ensure success status code
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Email sent successfully. Response: {Response}", response);
-                return true;
-            }
-            else
-            {
-                _logger.LogWarning("Failed to send email. Response: {Response}", response);
-                return false;
-            }
-        }
+        //    var request = new NanhiDuniyaEmailRequest()
+        //    {
+        //        ToEmail = toEmailLoist,
+        //        //CcList = new List<string> { "saurabhmishra1464@gmail.com" }, // Add CC addresses if needed
+        //        From = _defaultFromAddress,
+        //        Subject = subject,
+        //        TemplateName = templateName,
+        //        HtmlBody = htmlBody,
+        //    };
 
 
-        private HttpRequestMessage CreateMessage(NanhiDuniyaEmailRequest request)
-        {
-            if (string.IsNullOrWhiteSpace(request.From))
-            {
-                request.From = _defaultFromAddress;
-            }
-            var content = JsonSerializer.Serialize<NanhiDuniyaEmailRequest>(request);
-            HttpContent httpContent = new StringContent(content, Encoding.UTF8, "application/json");
-            HttpRequestMessage message = new HttpRequestMessage()
-            {
-                Method = HttpMethod.Post,
-                RequestUri = new Uri(_serviceUrl),
-                Content = httpContent
-            };
-            return message;
-        }
+        //    //return await SendEmailAsync(request);
+        //}
 
-        private string LoadHtmlTemplate(string templatePath, string resetLink, string firstName,string to)
-        {
-            ValidateFileExists(templatePath);
-            string htmlContent = File.ReadAllText(templatePath);
-            htmlContent = htmlContent.Replace("{{SchoolName}}", "Nanhi Duniya");
-            htmlContent = htmlContent.Replace("{{FirstName}}", firstName);
-            htmlContent = htmlContent.Replace("{{resetLink}}", resetLink);
-            htmlContent = htmlContent.Replace("{{Email}}", to);
-            return htmlContent;
-        }
+    //    public async Task SendEmailAsync(NanhiDuniyaEmailRequest request)
+    //    {
+    //        await _publishEndpoint.Publish<ISendEmailEvent>(new
+    //        {
+    //            To = request.ToEmail,
+    //            From = request.From,
+    //            Subject = request.Subject,
+    //            TemplateName = request.TemplateName,
+    //            HtmlBody = request.HtmlBody
+    //    // Include other properties as needed
+    //});
+    //        //var response = await _httpClient.SendAsync(CreateMessage(request));
+    //        //// Ensure success status code
+    //        //if (response.IsSuccessStatusCode)
+    //        //{
+    //        //    _logger.LogInformation("Email sent successfully. Response: {Response}", response);
+    //        //    return true;
+    //        //}
+    //        //else
+    //        //{
+    //        //    _logger.LogWarning("Failed to send email. Response: {Response}", response);
+    //        //    return false;
+    //        //}
+    //    }
 
-        private void ValidateFileExists(string filePath)
-        {
-            if (!File.Exists(filePath))
-                throw new FileNotFoundException($"File not found: {filePath}", filePath);
-        }
+        //private HttpRequestMessage CreateMessage(NanhiDuniyaEmailRequest request)
+        //{
+        //    if (string.IsNullOrWhiteSpace(request.From))
+        //    {
+        //        request.From = _defaultFromAddress;
+        //    }
+        //    var content = JsonSerializer.Serialize<NanhiDuniyaEmailRequest>(request);
+        //    HttpContent httpContent = new StringContent(content, Encoding.UTF8, "application/json");
+        //    HttpRequestMessage message = new HttpRequestMessage()
+        //    {
+        //        Method = HttpMethod.Post,
+        //        RequestUri = new Uri(_serviceUrl),
+        //        Content = httpContent
+        //    };
+        //    return message;
+        //}
+
+
     }
 }

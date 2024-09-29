@@ -40,10 +40,17 @@ export default function SignIn() {
     try {
       const userData = await loginUser(loginForm);
       if (userData.data?.success) {
-        toast.success(userData.data.message);
-        router.push("/admin/dashboard");
+        if (!userData.data?.data.iEmailConfirmed) {
+          toast.info("Please confirm your email to proceed.");
+          const email: string = loginForm.userName;
+          const queryString = new URLSearchParams({ email }).toString();
+          router.push(`/auth/confirmEmail?${queryString}`);
+        }else{
+          toast.success(userData.data.message);
+          router.push("/admin/dashboard");
+        }
       } else {
-        toast.error(userData.data?.message);
+          toast.error(userData.data?.message);
       }
     }
     catch (err: any) {

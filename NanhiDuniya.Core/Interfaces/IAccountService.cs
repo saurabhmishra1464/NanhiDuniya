@@ -21,5 +21,6 @@ namespace NanhiDuniya.Core.Interfaces
         Task<ApiResponse<UserProfile>> GetUser();
         Task<ApiResponse<object>> ConfirmEmail(string token, string email);
         Task<ApiResponse<object>> ForgotPassword(string email);
+        Task<ApiResponse<object>> SendConfirmationEmail(string email);
     }
 }

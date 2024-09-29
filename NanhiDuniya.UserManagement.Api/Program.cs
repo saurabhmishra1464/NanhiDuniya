@@ -13,7 +13,9 @@ using NanhiDuniya.Data.Repositories;
 using NanhiDuniya.Core.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using NanhiDuniya.Core.Resources.ResponseDtos;
-
+using NanhiDuniya.MessageBus.MassTransit;
+using NanhiDuniya.MessageBus;
+using NanhiDuniya.MessageBus.SQL;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 // Add services to the container.
@@ -21,9 +23,14 @@ var jwtSettings = new JwtSettings();
 configuration.Bind("JwtSettings", jwtSettings);
 builder.Services.AddSingleton(jwtSettings);
 builder.Services.AddControllers();
+//builder.Services.AddScoped(typeof(IRepository<>), typeof(SqlRepository<>));
+
+// Register MassTransit with RabbitMQ
+builder.Services.AddMassTransitWithRabbitMq();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => {
+builder.Services.AddSwaggerGen(options =>
+{
     options.SwaggerDoc("v1", new OpenApiInfo { Title = "Nanhi Duniya User Management API", Version = "v1" });
     options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
     {
@@ -53,22 +60,32 @@ builder.Services.AddSwaggerGen(options => {
         }
     });
 });
-builder.Services.Configure<ApiBehaviorOptions>(o =>
+builder.Services.Configure<ApiBehaviorOptions>(options =>
 {
-    o.InvalidModelStateResponseFactory = actionContext =>
+    options.InvalidModelStateResponseFactory = actionContext =>
     {
-        var res = new ApiResponse<object>(false, "One or more validation errors occurred.", null, StatusCodes.Status400BadRequest, actionContext.ModelState.Values
+        var errors = actionContext.ModelState.Values
             .SelectMany(v => v.Errors)
             .Select(e => e.ErrorMessage)
-            .ToArray());
-        return new ObjectResult(res);
+            .ToArray();
+
+        var response = new ApiResponse<object>(
+            success: false,
+            message: "One or more validation errors occurred.",
+            data: null,
+            statusCode: StatusCodes.Status400BadRequest
+        );
+
+        return new ObjectResult(response)
+        {
+            StatusCode = StatusCodes.Status400BadRequest
+        };
     };
 });
+
 //Sql Server Setup
-builder.Services.AddDbContext<NanhiDuniyaDbContext>(options =>options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
-
 //initializing services.
 builder.Services.DataServiceCollection(builder.Configuration);
 
@@ -101,7 +118,8 @@ builder.Services.AddAuthentication(options =>
     };
     options.SaveToken = true;
     options.Events = new JwtBearerEvents();
-    options.Events.OnMessageReceived = context => {
+    options.Events.OnMessageReceived = context =>
+    {
 
         if (context.Request.Cookies.ContainsKey("X-Access-Token"))
         {
@@ -110,24 +128,26 @@ builder.Services.AddAuthentication(options =>
 
         return Task.CompletedTask;
     };
-     })
+})
      .AddCookie(options =>
      {
-      options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict;
-      options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-      options.Cookie.IsEssential = true;
+         options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.None;
+         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+         options.Cookie.IsEssential = true;
      });
 
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("CorsPolicy",
+    options.AddPolicy("AllowFrontend",
         builder => builder
-            .WithOrigins("http://localhost:3000")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials()); // This line is crucial
+            .WithOrigins("https://localhost:7777")  // Allow requests from frontend
+            .AllowAnyHeader()                     // Allow headers like Authorization
+            .AllowAnyMethod()                     // Allow GET, POST, PUT, etc.
+            .AllowCredentials());                 // Allow cookies (if needed)
 });
+//builder.Services.AddMassTransitWithRabbitMq(builder.Configuration);
 //builder.Services.AddCors(options =>
 //  options.AddPolicy("Dev", builder =>
 //  {
@@ -175,7 +195,7 @@ app.UseHttpsRedirection();
 //    context.Response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
 //    await next();
 //});
-app.UseCors("CorsPolicy");
+app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
 

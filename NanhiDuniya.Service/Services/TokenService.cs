@@ -119,22 +119,22 @@ namespace NanhiDuniya.Service.Services
         public async Task<ApiResponse<object>> VerifyRefreshToken()
         {
             if (!(_httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("X-Username", out var userName) && _httpContextAccessor.HttpContext.Request.Cookies.TryGetValue("X-Refresh-Token", out var refreshToken)))
-                return new ApiResponse<object>(false, "Missing authentication information. Please log in again.", null, StatusCodes.Status400BadRequest, null);
+                return ApiResponseHelper.CreateErrorResponse<object>("Missing authentication information. Please log in again.", StatusCodes.Status400BadRequest);
             var storedToken = await _tokenRepository.GetRefreshTokenAsync(refreshToken);
             if (storedToken == null || storedToken.RefreshToken != refreshToken || storedToken.Expires < DateTime.UtcNow || storedToken.IsRevoked)
             {
-                return new ApiResponse<object>(false, "Invalid or expired Refreshtoken. Please log in again.", null, StatusCodes.Status404NotFound, null);
+                return ApiResponseHelper.CreateErrorResponse<object>("Invalid or expired Refreshtoken. Please log in again.", StatusCodes.Status404NotFound);
             }
             var accessToken = await GenerateAccessToken(userName, storedToken.UserId);
             _httpContextAccessor.HttpContext.Response.Cookies.Append("X-Access-Token", accessToken, new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict, Expires = DateTime.Now.AddMinutes(Convert.ToInt32(_jwtService.AccessTokenExpiry)) });
-            return new ApiResponse<object>(true, "Token refreshed successfully.", null, StatusCodes.Status200OK, null);
+            return ApiResponseHelper.CreateSuccessResponse<object>(null, "Token refreshed successfully.");
         }
         public async Task<ApiResponse<object>> RevokeRefreshToken(string userId)
         {
             var tokensToRevoke = await _tokenRepository.GetListOfRefreshTokensByUserIdAsync(userId);
             if (tokensToRevoke == null || tokensToRevoke.Count == 0)
             {
-                return new ApiResponse<object>(false, "No refresh tokens found for user.", null, StatusCodes.Status404NotFound, null);
+                return ApiResponseHelper.CreateErrorResponse<object>("No refresh tokens found for user.", StatusCodes.Status404NotFound);
             }
 
             foreach (var token in tokensToRevoke)
@@ -145,7 +145,7 @@ namespace NanhiDuniya.Service.Services
             _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Access-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
             _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Username", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
             _httpContextAccessor.HttpContext.Response.Cookies.Delete("X-Refresh-Token", new CookieOptions() { HttpOnly = true, SameSite = SameSiteMode.Strict });
-            return new ApiResponse<object>(true, "Logout Succesfully Completed.", null, StatusCodes.Status200OK, null);
+            return ApiResponseHelper.CreateSuccessResponse<object>(null, "Logout Succesfully Completed.");
         }
 
         public async Task AddRefreshTokenAsync(UserRefreshToken refreshToken)

@@ -13,6 +13,7 @@ export interface UserProfile {
     bio: string;
     profilePictureUrl: string;
     roles: [];
+    iEmailConfirmed: boolean;
 }
 
 export interface LogoutResponse {

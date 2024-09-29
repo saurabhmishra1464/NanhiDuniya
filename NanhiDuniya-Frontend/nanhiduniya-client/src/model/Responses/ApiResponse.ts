@@ -5,4 +5,5 @@ export interface ApiResponse<T> {
     data: T;
     statusCode: number;
     errors?: any;
+    IsEmailConfirmed?:boolean;
 }

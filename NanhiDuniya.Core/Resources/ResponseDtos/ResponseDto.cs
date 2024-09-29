@@ -31,5 +31,6 @@ namespace NanhiDuniya.Core.Resources.ResponseDtos
         public string? Bio { get; set; }
         public string? ProfilePictureUrl { get; set; }
         public List<string>? Roles { get; set; }
+        public bool? IEmailConfirmed { get; set; }
     }
 }
