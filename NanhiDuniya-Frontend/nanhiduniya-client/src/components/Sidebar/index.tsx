@@ -2,12 +2,11 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
 import SidebarItem from "@/components/Sidebar/SidebarItem";
 import ClickOutside from "@/components/ClickOutside";
 import useLocalStorage from "@/hooks/useLocalStorage";
-
+import { HiUserGroup } from "react-icons/hi";
 interface SidebarProps {
   sidebarOpen: boolean;
   setSidebarOpen: (arg: boolean) => void;
@@ -46,8 +45,15 @@ const menuGroups = [
           </svg>
         ),
         label: "Dashboard",
+        route: "/chart",
+      },
+      {
+        icon: (
+          <HiUserGroup />
+        ),
+        label: "Users",
         route: "#",
-        children: [{ label: "eCommerce", route: "/" }],
+        children: [{ label: "Admin", route: "/admin/AdminCreate" },{ label: "Teacher", route: "/" },{ label: "Parent", route: "/" },{ label: "Student", route: "/" }],
       },
       {
         icon: (
@@ -330,21 +336,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
     
     <ClickOutside onClick={() => setSidebarOpen(false)}>
       <aside
-        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-9999 flex h-screen w-72.5 flex-col overflow-y-hidden bg-black duration-300 ease-linear dark:bg-boxdark ${sidebarOpen ? 'lg:translate-x-0': ''} ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* <!-- SIDEBAR HEADER --> */}
         <div className="flex items-center justify-between gap-2 px-6 py-5.5 lg:py-6.5">
-          {/* <Link href="/">
-            <Image
-              width={176}
-              height={32}
-              src={"/images/logo/logo.svg"}
-              alt="Logo"
-              priority
-            />
-          </Link> */}
   <h1 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 shadow-lg">
     NanhiDuniya
   </h1>
