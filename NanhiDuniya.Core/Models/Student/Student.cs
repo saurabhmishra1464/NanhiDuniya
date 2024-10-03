@@ -11,7 +11,7 @@ namespace NanhiDuniya.Core.Models.Student
     public class Student
     {
         [Key]
-        public int StudentId { get; set; }
+        public int Id { get; set; }
         [Required]
         [ForeignKey("AspNetUsers")]
         public string UserId { get; set; }

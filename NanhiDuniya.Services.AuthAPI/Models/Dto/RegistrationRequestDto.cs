@@ -1,14 +1,6 @@
-﻿using Microsoft.AspNetCore.Http;
-using NanhiDuniya.Core.Validators;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
-namespace NanhiDuniya.Core.Resources.AccountDtos
+namespace NanhiDuniya.Services.AuthAPI.Models.Dto
 {
     public class RegistrationRequestDto
     {
@@ -25,7 +17,7 @@ namespace NanhiDuniya.Core.Resources.AccountDtos
         public string? LastName { get; set; }
 
         [Required(ErrorMessage = "Phone number is required.")]
-        [PhoneNumber(ErrorMessage = "Invalid phone number.")]
+        [Phone(ErrorMessage = "Invalid phone number.")]
         public string PhoneNumber { get; set; }
 
         [Required(ErrorMessage = "Role is required.")]
@@ -37,5 +29,4 @@ namespace NanhiDuniya.Core.Resources.AccountDtos
             ErrorMessage = "Password must contain at least one uppercase letter, one lowercase letter, and one number")]
         public string Password { get; set; }
     }
-
 }
