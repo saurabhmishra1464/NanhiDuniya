@@ -46,13 +46,7 @@ export const PersonalInfoValidation = z.object({
     fullName: SafeString( z.string().min(2, "Full name must be at least 2 characters")
         .max(50, "Full name must be at most 50 characters")),
     email: z.string().email("Invalid email address"),
-    phoneNumber: z.string().transform((phone) => {
-        // Add +91 if it is not already present
-        if (!phone.startsWith('+91')) {
-          return `+91${phone}`;
-        }
-        return phone;
-      }).refine((phone) => /^\+\d{12}$/.test(phone), "Invalid phone number"),
+    phoneNumber: z.string().refine((phone) => /^\+\d{10}$/, "Invalid phone number"),
 
       userName: z
       .string()
@@ -60,6 +54,48 @@ export const PersonalInfoValidation = z.object({
       .email({ message: 'Invalid email address' }),
     
     bio: z.string().optional(),
+
+})
+
+export const AdminCreateValidation = z.object({
+  firstName: SafeString( z.string().min(2, "First name must be at least 2 characters")
+      .max(50, "First name must be at most 50 characters")),
+      lastName: SafeString( z.string().min(2, "Last name must be at least 2 characters")
+      .max(50, "Last name must be at most 50 characters")),
+      birthDay: z
+      .string()
+      .transform((value) => new Date(value))
+      .refine(
+        (date) => !isNaN(date.getTime()), // Check if the date is valid
+        { message: "Invalid date format. Please enter a valid date." }
+      ),
+      // gender: z.enum(["Male", "Female"], {errorMap: ()=>({message: "Please select a valid role: Admin, Teacher, Student, or Parent"})}),
+      gender: z.enum(['Male', 'Female'], {
+        errorMap: () => ({ message: "Gender must be either 'Male' or 'Female'" })
+      }),
+    address: z
+    .string()
+    .min(5, "Address must be at least 5 characters")
+    .max(500, "Address must be at most 500 characters"),
+    
+  bloodGroup: z.enum(['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],{errorMap:()=>({message: "Please input a valid blood group" })}),
+  phoneNumber: z.string()
+  .trim()
+  .refine(
+    (phone) => /^\d{10}$/.test(phone),
+    "Phone number must be exactly 10 digits"
+  ),
+  email: z.string().email("Invalid email address"),
+
+  password: z
+  .string()
+  .min(8, { message: "Password must be at least 8 characters long" })
+  .regex(/[a-z]/, { message: "Password must contain at least one lowercase letter" })
+  .regex(/[A-Z]/, { message: "Password must contain at least one uppercase letter" })
+  .regex(/[0-9]/, { message: "Password must contain at least one number" })
+  .regex(/[@$!%*?&]/, { message: "Password must contain at least one special character" }),
+
+  role: z.enum(['Admin', 'Super Admin'],{errorMap: ()=>({message: "Please select a valid role: Admin or SuperAdmin"})}),
 
 })
 

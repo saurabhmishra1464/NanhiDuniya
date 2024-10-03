@@ -2,7 +2,6 @@
 
 import { PersonalInfoValidation } from '@/lib/validation';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSession } from 'next-auth/react';
 import React, {useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-toastify';

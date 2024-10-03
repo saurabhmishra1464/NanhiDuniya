@@ -27,7 +27,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NanhiDuniya.Services.EmailA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NanhiDuniya.MessageBus", "NanhiDuniya.MessageBus\NanhiDuniya.MessageBus.csproj", "{7AE37C94-8816-470C-934E-6DB7976959BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NanhiDuniya.Contracts", "NanhiDuniya.Contracts\NanhiDuniya.Contracts.csproj", "{D52AF74E-1E30-4862-8ED0-3B6EF6885713}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NanhiDuniya.Contracts", "NanhiDuniya.Contracts\NanhiDuniya.Contracts.csproj", "{D52AF74E-1E30-4862-8ED0-3B6EF6885713}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NanhiDuniya.Services.AuthAPI", "NanhiDuniya.Services.AuthAPI\NanhiDuniya.Services.AuthAPI.csproj", "{C1D4F5DD-E028-4DB2-A0AA-92BCCC9CCD93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,6 +69,10 @@ Global
 		{D52AF74E-1E30-4862-8ED0-3B6EF6885713}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D52AF74E-1E30-4862-8ED0-3B6EF6885713}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D52AF74E-1E30-4862-8ED0-3B6EF6885713}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C1D4F5DD-E028-4DB2-A0AA-92BCCC9CCD93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1D4F5DD-E028-4DB2-A0AA-92BCCC9CCD93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D4F5DD-E028-4DB2-A0AA-92BCCC9CCD93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1D4F5DD-E028-4DB2-A0AA-92BCCC9CCD93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
