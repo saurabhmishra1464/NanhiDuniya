@@ -1,9 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using MassTransit;
+using Microsoft.AspNetCore.Identity;
+using NanhiDuniya.Contracts;
+using NanhiDuniya.Services.AuthAPI.Constants;
 using NanhiDuniya.Services.AuthAPI.Data;
 using NanhiDuniya.Services.AuthAPI.Middleware;
 using NanhiDuniya.Services.AuthAPI.Models;
 using NanhiDuniya.Services.AuthAPI.Models.Dto;
 using NanhiDuniya.Services.AuthAPI.Service.IService;
+using NanhiDuniya.Services.AuthAPI.Utilities;
 using System;
 
 namespace NanhiDuniya.Services.AuthAPI.Service
@@ -12,16 +16,27 @@ namespace NanhiDuniya.Services.AuthAPI.Service
     {
          private readonly UserManager<ApplicationUser> _userManager;
          private readonly NanhiDuniyaDbContext _db;
-         private readonly IJwtTokenGenerator _jwtTokenGenerator;
          private readonly RoleManager<IdentityRole> _roleManager;
-        public AuthService(NanhiDuniyaDbContext db, IJwtTokenGenerator jwtTokenGenerator,
-    UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+         private readonly ITokenService _tokenService;
+         private readonly IUserService _userService;
+         private readonly IWebHostEnvironment _env;
+         private readonly IPublishEndpoint publishEndpoint;
+        private readonly ILogger<AuthService> _logger;
+        public AuthService(NanhiDuniyaDbContext db,
+    UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager, ITokenService tokenService,
+    IUserService userService, IWebHostEnvironment env, IPublishEndpoint publishEndpoint, ILogger<AuthService> logger)
         {
             _db = db;
-            _jwtTokenGenerator = jwtTokenGenerator;
+            this.publishEndpoint = publishEndpoint;
             _userManager = userManager;
+            _tokenService = tokenService;
             _roleManager = roleManager;
+            _userService = userService;
+            _env = env;
+            this._logger = logger;
         }
+
+        #region Authentication
         public async Task<ApiResponse<object>> Register(RegistrationRequestDto model)
         {
             // Initialize a ResultResponse object to store the registration result.
@@ -92,7 +107,7 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "User Registered Succesfully");
         }
 
-
+        #endregion
 
 
         #region Helper methods
@@ -114,6 +129,23 @@ namespace NanhiDuniya.Services.AuthAPI.Service
         private async Task<IdentityResult> CreateUserAsync(ApplicationUser user, string? password)
         {
             return await _userManager.CreateAsync(user, password!);
+        }
+
+        public string LoadHtmlTemplate(string templatePath, string resetLink, string firstName, string to)
+        {
+            ValidateFileExists(templatePath);
+            string htmlContent = File.ReadAllText(templatePath);
+            htmlContent = htmlContent.Replace("{{SchoolName}}", "Nanhi Duniya");
+            htmlContent = htmlContent.Replace("{{FirstName}}", firstName);
+            htmlContent = htmlContent.Replace("{{resetLink}}", resetLink);
+            htmlContent = htmlContent.Replace("{{Email}}", to);
+            return htmlContent;
+        }
+
+        public void ValidateFileExists(string filePath)
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"File not found: {filePath}", filePath);
         }
 
         #endregion

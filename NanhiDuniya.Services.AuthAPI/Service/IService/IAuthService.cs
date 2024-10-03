@@ -1,8 +1,10 @@
-﻿namespace NanhiDuniya.Services.AuthAPI.Service.IService
+﻿using NanhiDuniya.Services.AuthAPI.Models.Dto;
+
+namespace NanhiDuniya.Services.AuthAPI.Service.IService
 {
     public interface IAuthService
     {
-        Task<string> Register(RegistrationRequestDto registrationRequestDto);
-        Task<LoginResponseDto> Login(LoginRequestDto loginRequestDto);
+        //Task<ApiResponse<UserProfile>> Login(LoginModel model);
+        Task<ApiResponse<object>> Register(RegistrationRequestDto model);
     }
 }
