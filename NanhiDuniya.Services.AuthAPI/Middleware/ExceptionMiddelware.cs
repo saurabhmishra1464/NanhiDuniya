@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using NanhiDuniya.Services.AuthAPI.Models.Dto;
+using Newtonsoft.Json;
 using System;
 using System.Net;
 namespace NanhiDuniya.Services.AuthAPI.Middleware
