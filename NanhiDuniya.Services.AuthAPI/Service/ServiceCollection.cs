@@ -26,6 +26,7 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             services.AddSingleton<IPasswordService, PasswordService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IImageService, ImageService>();
+            services.AddScoped<IAuthRepository,AuthRepository>();
             return services;
         }
     }

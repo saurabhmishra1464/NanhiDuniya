@@ -15,6 +15,15 @@ namespace NanhiDuniya.Services.AuthAPI.Models.Dto
         [Required(ErrorMessage = "Last name is required")]
         [StringLength(50, ErrorMessage = "Last name cannot exceed 50 characters")]
         public string? LastName { get; set; }
+        [DataType(DataType.Date)]
+        public DateTime? Birthday { get; set; }
+        [Required]
+        [StringLength(10)]
+        public string Gender { get; set; }
+        [MaxLength(255)]
+        public string Address { get; set; }
+        [MaxLength(5)]
+        public string BloodGroup { get; set; }
 
         [Required(ErrorMessage = "Phone number is required.")]
         [Phone(ErrorMessage = "Invalid phone number.")]

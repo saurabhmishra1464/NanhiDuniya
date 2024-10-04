@@ -5,6 +5,8 @@ using Microsoft.Extensions.Options;
 using NanhiDuniya.Contracts;
 using NanhiDuniya.Services.AuthAPI.Constants;
 using NanhiDuniya.Services.AuthAPI.Data;
+using NanhiDuniya.Services.AuthAPI.Data.IRepositories;
+using NanhiDuniya.Services.AuthAPI.Data.Repositories;
 using NanhiDuniya.Services.AuthAPI.Middleware;
 using NanhiDuniya.Services.AuthAPI.Models;
 using NanhiDuniya.Services.AuthAPI.Models.Dto;
@@ -28,13 +30,15 @@ namespace NanhiDuniya.Services.AuthAPI.Service
          private readonly ILogger<AuthService> _logger;
          private readonly JWTService _jwtService;
          private readonly IHttpContextAccessor _httpContextAccessor;
+         private readonly IAuthRepository _authRepository;
         public AuthService(NanhiDuniyaDbContext db,
         UserManager<ApplicationUser> userManager, 
         IHttpContextAccessor httpContextAccessor, 
         RoleManager<IdentityRole> roleManager, 
         ITokenService tokenService,
         IUserService userService, 
-        IOptions<JWTService> options, 
+        IOptions<JWTService> options,
+        IAuthRepository authRepository,
         IWebHostEnvironment env, 
         IPublishEndpoint publishEndpoint, 
         ILogger<AuthService> logger)
@@ -44,6 +48,7 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             _userManager = userManager;
             _httpContextAccessor = httpContextAccessor;
             _tokenService = tokenService;
+            _authRepository = authRepository;
             _roleManager = roleManager;
             _jwtService = options.Value;
             _userService = userService;
@@ -69,35 +74,45 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             //Add User Roles
             if (!await _roleManager.RoleExistsAsync(UserRoles.Admin))
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin));
+            //if (!await _roleManager.RoleExistsAsync(UserRoles.Student))
+            //    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Student));
 
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Student))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Student));
+            //if (!await _roleManager.RoleExistsAsync(UserRoles.Teacher))
+            //    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Teacher));
 
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Teacher))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Teacher));
-
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Parent))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Parent));
+            //if (!await _roleManager.RoleExistsAsync(UserRoles.Parent))
+            //    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Parent));
 
             if (await _roleManager.RoleExistsAsync(UserRoles.Admin) && model.Role == UserRoles.Admin)
             {
                 await _userManager.AddToRoleAsync(user, UserRoles.Admin);
             }
 
-            if (await _roleManager.RoleExistsAsync(UserRoles.Student) && model.Role == UserRoles.Student)
-            {
-                await _userManager.AddToRoleAsync(user, UserRoles.Student);
-            }
 
-            if (await _roleManager.RoleExistsAsync(UserRoles.Teacher) && model.Role == UserRoles.Teacher)
-            {
-                await _userManager.AddToRoleAsync(user, UserRoles.Teacher);
-            }
+            //if (await _roleManager.RoleExistsAsync(UserRoles.Student) && model.Role == UserRoles.Student)
+            //{
+            //    await _userManager.AddToRoleAsync(user, UserRoles.Student);
+            //}
 
-            if (await _roleManager.RoleExistsAsync(UserRoles.Parent) && model.Role == UserRoles.Parent)
+            //if (await _roleManager.RoleExistsAsync(UserRoles.Teacher) && model.Role == UserRoles.Teacher)
+            //{
+            //    await _userManager.AddToRoleAsync(user, UserRoles.Teacher);
+            //}
+
+            //if (await _roleManager.RoleExistsAsync(UserRoles.Parent) && model.Role == UserRoles.Parent)
+            //{
+            //    await _userManager.AddToRoleAsync(user, UserRoles.Parent);
+            //}
+            var adminRecord = new Admin
             {
-                await _userManager.AddToRoleAsync(user, UserRoles.Parent);
-            }
+                UserId = user.Id,
+                Birthday = model.Birthday,
+                Gender = model.Gender,
+                Address = model.Address,
+                BloodGroup = model.BloodGroup,
+            };
+           await  _authRepository.InsertAdminRecordAsync(adminRecord);
+
             var token = await _tokenService.GenerateConfirmEmailToken(user.Email);
 
             // Customize the email template and send verify email link
