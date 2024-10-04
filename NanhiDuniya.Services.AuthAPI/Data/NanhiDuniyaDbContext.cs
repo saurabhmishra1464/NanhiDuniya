@@ -17,6 +17,7 @@ namespace NanhiDuniya.Services.AuthAPI.Data
         }
 
         public virtual DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
+        public virtual DbSet<Admin> Admins { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -34,6 +35,10 @@ namespace NanhiDuniya.Services.AuthAPI.Data
                 entity.Property(e => e.IsRevoked).HasDefaultValue(false);
                 entity.HasIndex(e => e.IsRevoked);
             });
+
+            modelBuilder.Entity<Admin>()
+            .HasIndex(a => a.UserId)
+            .IsUnique();
 
             OnModelCreatingPartial(modelBuilder);
         }
