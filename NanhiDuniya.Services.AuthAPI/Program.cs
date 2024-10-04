@@ -15,6 +15,8 @@ using NanhiDuniya.Services.AuthAPI.Models;
 using NanhiDuniya.Services.AuthAPI.Models.Dto;
 using NanhiDuniya.Services.AuthAPI.Service;
 using NanhiDuniya.Services.AuthAPI.Middleware;
+using NanhiDuniya.Services.AuthAPI.Constants;
+using static NanhiDuniya.Services.AuthAPI.Settings.NanhiDuniyaServices;
 var builder = WebApplication.CreateBuilder(args);
 var configuration = builder.Configuration;
 // Add services to the container.
@@ -145,6 +147,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()                     // Allow GET, POST, PUT, etc.
             .AllowCredentials());                 // Allow cookies (if needed)
 });
+
+builder.Services.Configure<JWTService>(configuration.GetSection("JwtSettings"));
+builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection("NanhiDuniyaServices"));
 
 var app = builder.Build();
 

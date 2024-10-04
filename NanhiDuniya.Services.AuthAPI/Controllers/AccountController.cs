@@ -31,7 +31,7 @@ namespace NanhiDuniya.Services.AuthAPI.Controllers
         }
         #endregion
 
-        #region User Registration Endpoint
+        #region Authentication
 
         [HttpPost("Register")]
         public async Task<IActionResult> Register([FromBody] RegistrationRequestDto model)
@@ -40,9 +40,6 @@ namespace NanhiDuniya.Services.AuthAPI.Controllers
             return Ok(result);
 
         }
-        #endregion
-
-        #region Admin Registration Endpoint
 
         [Authorize(Roles = UserRoles.Admin)]
         [HttpPost("Register-Admin")]
@@ -51,32 +48,31 @@ namespace NanhiDuniya.Services.AuthAPI.Controllers
             var result = await _authService.Register(model);
             return Ok(result);
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto model)
+        {
+            var result = await _authService.Login(model);
+            return Ok(result);
+        }
         #endregion
 
-        //#region Authentication Token and handshake endpoints 
 
-        //[HttpPost("login")]
-        //public async Task<IActionResult> LoginApi([FromBody] LoginRequestDto model)
-        //{
-        //    var result = await _accountService.Login(_mapper.Map<LoginModel>(model));
-        //    return Ok(result);
-        //}
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
+        {
+            var resetPassword = await _authService.ForgotPassword(forgotPasswordDto.Email);
 
-        //[HttpPost("forgot-password")]
-        //public async Task<IActionResult> ForgotPassword(ForgotPasswordDto forgotPasswordDto)
-        //{
-        //    var resetPassword = await _accountService.ForgotPassword(forgotPasswordDto.Email);
+            return Ok(resetPassword);
+        }
 
-        //    return Ok(resetPassword);
-        //}
+        [HttpGet("refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            var result = await _tokenService.VerifyRefreshToken();
 
-        //[HttpGet("refresh")]
-        //public async Task<IActionResult> Refresh()
-        //{
-        //    var result = await _tokenService.VerifyRefreshToken();
-
-        //    return Ok(result);
-        //}
+            return Ok(result);
+        }
 
         //[HttpGet("check-auth")]
         //public IActionResult CheckAuth()
@@ -87,68 +83,63 @@ namespace NanhiDuniya.Services.AuthAPI.Controllers
 
 
 
-        //[HttpPost("RevokeRefreshToken")]
-        //[Authorize]
-        //public async Task<IActionResult> RevokeRefreshToken(RevokeRefreshTokenDto revokeRefreshTokenRequest)
-        //{
-        //    var result = await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
-        //    return Ok(result);
-        //}
+        [HttpPost("RevokeRefreshToken")]
+        [Authorize]
+        public async Task<IActionResult> RevokeRefreshToken(RevokeRefreshTokenDto revokeRefreshTokenRequest)
+        {
+            var result = await _tokenService.RevokeRefreshToken(revokeRefreshTokenRequest.UserId);
+            return Ok(result);
+        }
 
-        //[HttpPost("ResetPassword")]
-        //public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
-        //{
-        //    var result = await _accountService.ResetPassword(model);
-        //    return Ok(result);
+        [HttpPost("ResetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto model)
+        {
+            var result = await _authService.ResetPassword(model);
+            return Ok(result);
 
-        //}
+        }
 
-        //[HttpGet("Verify-Email")]
-        //public async Task<IActionResult> VerifyEmail(string token, string email)
-        //{
-        //    var verifyEmailResult = await _accountService.ConfirmEmail(token, email);
-        //    return Ok(verifyEmailResult);
-        //}
+        [HttpGet("Verify-Email")]
+        public async Task<IActionResult> VerifyEmail(string token, string email)
+        {
+            var verifyEmailResult = await _authService.ConfirmEmail(token, email);
+            return Ok(verifyEmailResult);
+        }
 
-        //[HttpPost("SendConfirmationEmail")]
-        //public async Task<IActionResult> SendConfirmationEmail(ResendEmailDto resendEmailDto)
-        //{
-        //    var result = await _accountService.SendConfirmationEmail(resendEmailDto.Email);
-        //    return Ok(result);
-        //}
+        [HttpPost("SendConfirmationEmail")]
+        public async Task<IActionResult> SendConfirmationEmail(ResendEmailDto resendEmailDto)
+        {
+            var result = await _authService.SendConfirmationEmail(resendEmailDto.Email);
+            return Ok(result);
+        }
 
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> GetUser()
+        {
+            var user = await _authService.GetUser();
+            return Ok(user);
 
-        //#endregion
+        }
 
-        //#region GetUserProfile
-        //[HttpGet("me")]
-        //[Authorize]
-        //public async Task<IActionResult> GetUser()
-        //{
-        //    var user = await _accountService.GetUser();
-        //    return Ok(user);
+        [HttpPut("UpdateUser")]
+        [Authorize]
+        public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)
+        {
+            var result = await _authService.PutUserAsync(userInfo);
+            return Ok(result);
+        }
 
-        //}
+        [HttpPost("UploadProfilePicture")]
+        [Authorize]
+        public async Task<IActionResult> UploadProfilePicture(UploadProfilePictureDto upload)
+        {
+            var result = await _imageService.SaveImageAsync(upload);
+            return Ok(result);
+        }
 
-        //#endregion
 
         //#region Update User
-
-        //[HttpPut("UpdateUser")]
-        //[Authorize]
-        //public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)
-        //{
-        //    var result = await _accountService.PutUserAsync(userInfo);
-        //    return Ok(result);
-        //}
-
-        //[HttpPost("UploadProfilePicture")]
-        //[Authorize]
-        //public async Task<IActionResult> UploadProfilePicture(UploadProfilePictureDto upload)
-        //{
-        //    var result = await _imageService.SaveImageAsync(upload);
-        //    return Ok(result);
-        //}
 
         //#endregion
     }

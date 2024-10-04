@@ -9,7 +9,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/me",
@@ -21,7 +21,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/SendConfirmationEmail",
@@ -33,7 +33,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/Verify-Email",
@@ -46,7 +46,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/refresh",
@@ -59,7 +59,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/forgot-password",
@@ -71,7 +71,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/ResetPassword",
@@ -83,7 +83,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/Login",
@@ -95,7 +95,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/RefreshToken",
@@ -107,7 +107,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/RevokeRefreshToken",
@@ -119,7 +119,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/UpdateUser",
@@ -131,7 +131,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/UploadProfilePicture",
@@ -143,7 +143,7 @@
       "DownstreamHostAndPorts": [
         {
           "Host": "localhost",
-          "Port": 7014
+          "Port": 7098
         }
       ],
       "UpstreamPathTemplate": "/api/Account/Users/{userId}",
