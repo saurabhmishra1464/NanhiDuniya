@@ -6,6 +6,8 @@ import { AdminCreateValidation } from '@/lib/validation';
 import {useRegisterAdminMutation} from '@/services/auth';
 import { toast } from 'react-toastify';
 import { handleError } from '@/utils/ErrorHandelling/errorHandler';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 type CreateAdminProps = {
     closePopup: ()=> void;
 }
@@ -27,6 +29,7 @@ const onSubmit = async(data: z.infer<typeof AdminCreateValidation>) =>
   try {
    
     const response = await registerAdmin(data);
+    console.log(response);
     if (response.data?.success) {
         toast.success(response.data.message);
         reset();  
@@ -38,8 +41,39 @@ const onSubmit = async(data: z.infer<typeof AdminCreateValidation>) =>
 } catch (error: any) {
     let message = handleError(error);
     toast.error(message);
+    closePopup();
+}finally{
+  closePopup();
 }
   
+}
+
+if(isLoading){
+  return (
+    <div className="col-span-5 xl:col-span-3">
+  <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
+    <div className="border-b border-stroke px-7 py-4 dark:border-strokedark">
+      <h3 className="font-medium text-black dark:text-white">
+        Create New Admin
+      </h3>
+    </div>
+    <div className="p-7">
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={40} className="mb-5.5" />
+      <Skeleton height={50} className="mb-5.5" />
+      <Skeleton height={50} className="mb-5.5" />
+    </div>
+  </div>
+</div>
+
+  )
 }
 
   return (

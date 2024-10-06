@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import GenericToolbar from '../common/GenericToolbar/genericToolbar';
+import GenericToolbar from '../common/GenericToolbar/GenericToolbar';
 import AdminGrid from './AdminGrid';
 import AdminCreatePopup from './AdminCreatePopup';
 

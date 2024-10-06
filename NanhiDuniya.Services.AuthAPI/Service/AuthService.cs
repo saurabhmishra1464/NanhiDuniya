@@ -66,7 +66,7 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             // If a user with the same email exists, return a response indicating user already exists.
             if (userExists != null)
             {
-                throw new UserAlreadyExistsException("User already exists!");
+                return ApiResponseHelper.CreateErrorResponse<object>("User already exists!", StatusCodes.Status409Conflict);
             }
             var user = BuildUserFromRegistrationModel(model);
             var result = await CreateUserAsync(user, model.Password);
