@@ -1,4 +1,4 @@
-import { LoginFormValidation, PersonalInfoValidation } from '@/lib/validation'
+import { AdminCreateValidation, LoginFormValidation, PersonalInfoValidation } from '@/lib/validation'
 import { ApiResponse } from '@/model/Responses/ApiResponse'
 import { LogoutResponse, RevokeRefreshTokenRequest, uploadImageResponse, UserProfile } from '@/model/Responses/AuthResponse'
 import { baseQueryWithReauth } from '@/utils/fetchBaseQuery'
@@ -13,6 +13,15 @@ export const authApi = createApi({
   baseQuery: baseQueryWithReauth,
   tagTypes: ["UserManagement"],
   endpoints: (builder) => ({
+
+    registerAdmin: builder.mutation<ApiResponse<object>, z.infer<typeof AdminCreateValidation>>({
+      query:(user) =>({
+        url: 'api/Account/Register-Admin',
+        method: "POST",
+        body:user,
+      }),
+      invalidatesTags: ["UserManagement"],
+    }),
 
     loginUser: builder.mutation<ApiResponse<UserProfile>,z.infer<typeof LoginFormValidation>>({
       query: (user) => ({
@@ -56,4 +65,4 @@ export const authApi = createApi({
 });
 
 
-export const {useLoginUserMutation, useGetUserProfileQuery, useUpdateUserMutation, useUploadImageMutation, useLogoutUserMutation } = authApi
+export const {useRegisterAdminMutation,useLoginUserMutation, useGetUserProfileQuery, useUpdateUserMutation, useUploadImageMutation, useLogoutUserMutation } = authApi
