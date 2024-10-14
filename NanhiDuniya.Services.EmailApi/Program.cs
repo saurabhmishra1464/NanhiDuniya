@@ -94,7 +94,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseSerilogRequestLogging();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();// commented if for k8s
 app.UseAuthorization();
 
 app.MapControllers();

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanhiduniyaemail-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: emailapiservice
+  template:
+    metadata:
+      labels:
+        app: emailapiservice
+    spec:
+      containers:
+        - name: emailapiservice
+          image: saurabh1464/emailapiservice:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanhiduniyaemail-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: emailapiservice
+  ports:
+  - name: emailapiservice
+    protocol: TCP
+    port: 8080
+    targetPort: 8080

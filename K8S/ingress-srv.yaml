@@ -1,0 +1,27 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-srv
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+spec:
+  ingressClassName: nginx  # Replaces the kubernetes.io/ingress.class annotation
+  rules:
+    - host: nanhiduniya.com
+      http:
+        paths:
+          - path: /api/Account/me
+            pathType: Prefix
+            backend:
+              service:
+                name: nanhiduniyaauth-clusterip-srv
+                port:
+                  number: 8080
+
+          - path: /api/Account/Register
+            pathType: Prefix
+            backend:
+              service:
+                name: nanhiduniyaauth-clusterip-srv
+                port:
+                  number: 8080

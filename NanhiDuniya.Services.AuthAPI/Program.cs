@@ -84,7 +84,17 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 //Sql Server Setup
-builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+ if (builder.Environment.IsProduction())
+            {
+                Console.WriteLine("--> Using azure SqlServer Db");
+    builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("NanhiDuniyaAuthConn")));
+}
+else
+{
+    Console.WriteLine("--> local Db");
+    builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+}
+
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
 //initializing services.
 builder.Services.DataServiceCollection(builder.Configuration);
@@ -161,7 +171,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection(); // commented it for k8s
 app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
@@ -169,6 +179,23 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+// Apply migrations
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<NanhiDuniyaDbContext>();
+    if (app.Environment.IsProduction())
+    {
+        Console.WriteLine("--> Attempting to apply migrations...");
+        try
+        {
+            context.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"--> Could not run migrations: {ex.Message}");
+           
+        }
+    }
+}
 app.Run();
 

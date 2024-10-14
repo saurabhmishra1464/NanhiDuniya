@@ -128,10 +128,10 @@ namespace NanhiDuniya.Services.AuthAPI.Service
 
             await publishEndpoint.Publish<SendEmailEvent>(new
             {
-                ToEmail = toEmailLoist,
-                From = "saurabhmishra1464@gmail.com",
-                Subject = "Confirm Email",
-                HtmlBody = htmlBody
+               ToEmail = toEmailLoist,
+               From = "saurabhmishra1464@gmail.com",
+               Subject = "Confirm Email",
+               HtmlBody = htmlBody
             });
             _logger.LogInformation("User registered successfully: {Email}", model.Email);
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "User Registered Succesfully");
@@ -192,13 +192,13 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             toEmailLoist.Add("saurabhmishra1464@gmail.com");
             var templatePath = Path.Combine(_env.ContentRootPath, "Templates", $"{"ResetPassword"}.html");
             var htmlBody = LoadHtmlTemplate(templatePath, generatedLink, "", email);
-            await publishEndpoint.Publish<SendEmailEvent>(new
-            {
-                ToEmail = toEmailLoist,
-                From = "saurabhmishra1464@gmail.com",
-                Subject = "Forgot Password",
-                HtmlBody = htmlBody
-            });
+            //await publishEndpoint.Publish<SendEmailEvent>(new
+            //{
+            //    ToEmail = toEmailLoist,
+            //    From = "saurabhmishra1464@gmail.com",
+            //    Subject = "Forgot Password",
+            //    HtmlBody = htmlBody
+            //});
 
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "Reset password link generated successfully");
         }
@@ -258,13 +258,13 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             toEmailLoist.Add("saurabhmishra1464@gmail.com");
             var templatePath = Path.Combine(_env.ContentRootPath, "Templates", $"{"VerifyEmail"}.html");
             var htmlBody = LoadHtmlTemplate(templatePath, confirmEmailLink, user.FirstName, user.Email);
-            await publishEndpoint.Publish<SendEmailEvent>(new
-            {
-                ToEmail = toEmailLoist,
-                From = "saurabhmishra1464@gmail.com",
-                Subject = "Confirm Email",
-                HtmlBody = htmlBody
-            });
+            //await publishEndpoint.Publish<SendEmailEvent>(new
+            //{
+            //    ToEmail = toEmailLoist,
+            //    From = "saurabhmishra1464@gmail.com",
+            //    Subject = "Confirm Email",
+            //    HtmlBody = htmlBody
+            //});
 
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "Email sent Succesfully");
         }

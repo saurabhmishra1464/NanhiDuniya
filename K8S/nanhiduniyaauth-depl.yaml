@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanhiduniyaauth-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanhiduniyaservice
+  template:
+    metadata:
+      labels:
+        app: nanhiduniyaservice
+    spec:
+      containers:
+        - name: nanhiduniyaservice
+          image: saurabh1464/nanhidunitaservice:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanhiduniyaauth-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: nanhiduniyaservice
+  ports:
+  - name: nanhiduniyaservice
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
