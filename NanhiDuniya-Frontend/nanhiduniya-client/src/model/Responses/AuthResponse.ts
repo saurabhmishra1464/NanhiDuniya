@@ -16,6 +16,16 @@ export interface UserProfile {
     iEmailConfirmed: boolean;
 }
 
+export interface Admins {
+    id: string;
+    firstName: string;
+    phoneNumber: string;
+    email: string;
+    address: string;
+    bloodGroup: string;
+    Status: boolean;
+}
+
 export interface UserProfile {
     id: string;
     fullName: string;

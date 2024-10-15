@@ -3,25 +3,33 @@ kind: Ingress
 metadata:
   name: ingress-srv
   annotations:
-    nginx.ingress.kubernetes.io/use-regex: 'true'
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    kubernetes.io/ingress.class: "nginx"
 spec:
-  ingressClassName: nginx  # Replaces the kubernetes.io/ingress.class annotation
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - nanhiduniyaauthapi.saurabhmishra.com
+        - nanhiduniyafrontend.saurabhmishra.com
+      secretName: nanhiduniya-tls  # Name of the secret that will store the TLS certificates
   rules:
-    - host: nanhiduniya.com
+    - host: nanhiduniyaauthapi.saurabhmishra.com
       http:
         paths:
-          - path: /api/Account/me
+          - path: "/"
             pathType: Prefix
             backend:
               service:
                 name: nanhiduniyaauth-clusterip-srv
                 port:
                   number: 8080
-
-          - path: /api/Account/Register
+    - host: nanhiduniyafrontend.saurabhmishra.com
+      http:
+        paths:
+          - path: "/"
             pathType: Prefix
             backend:
               service:
-                name: nanhiduniyaauth-clusterip-srv
+                name: nanhiduniyafrontend-clusterip-srv
                 port:
-                  number: 8080
+                  number: 3000

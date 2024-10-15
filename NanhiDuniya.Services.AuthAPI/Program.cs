@@ -152,7 +152,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         builder => builder
-            .WithOrigins("https://localhost:7777")  // Allow requests from frontend
+            .WithOrigins("https://localhost:7777","http://nanhiduniya.com","https://nanhiduniyafrontend.saurabhmishra.com")  // Allow requests from frontend
             .AllowAnyHeader()                     // Allow headers like Authorization
             .AllowAnyMethod()                     // Allow GET, POST, PUT, etc.
             .AllowCredentials());                 // Allow cookies (if needed)
@@ -163,12 +163,13 @@ builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Nanhi Duniya User Management API V1");
+    options.RoutePrefix = string.Empty; // This will serve the Swagger UI at the root URL
+});
+app.MapGet("/", () => Results.Redirect("/index.html"));
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
 //app.UseHttpsRedirection(); // commented it for k8s
