@@ -122,6 +122,15 @@ namespace NanhiDuniya.Services.AuthAPI.Controllers
 
         }
 
+        [HttpGet("AdminList")]
+        [Authorize]
+        public async Task<IActionResult> GetAdmins()
+        {
+            var admins = await _authService.GetAdmins();
+            return Ok(admins);
+
+        }
+
         [HttpPut("UpdateUser")]
         [Authorize]
         public async Task<IActionResult> UpdateUser(UserInfoDto userInfo)

@@ -1,6 +1,6 @@
 import { AdminCreateValidation, LoginFormValidation, PersonalInfoValidation } from '@/lib/validation'
 import { ApiResponse } from '@/model/Responses/ApiResponse'
-import { LogoutResponse, RevokeRefreshTokenRequest, uploadImageResponse, UserProfile } from '@/model/Responses/AuthResponse'
+import { Admins, LogoutResponse, RevokeRefreshTokenRequest, uploadImageResponse, UserProfile } from '@/model/Responses/AuthResponse'
 import { baseQueryWithReauth } from '@/utils/fetchBaseQuery'
 import { 
   createApi, 
@@ -36,6 +36,11 @@ export const authApi = createApi({
       providesTags: ["UserManagement"],
     }),
 
+    getAdmins: builder.query<ApiResponse<Admins>, void>({
+      query: () => '/api/Account/AdminList',
+      providesTags: ["UserManagement"],
+    }),
+
     updateUser: builder.mutation<ApiResponse<UserProfile>, z.infer<typeof PersonalInfoValidation>>({
       query:(user) =>({
         url: 'api/Account/UpdateUser',
@@ -65,4 +70,4 @@ export const authApi = createApi({
 });
 
 
-export const {useRegisterAdminMutation,useLoginUserMutation, useGetUserProfileQuery, useUpdateUserMutation, useUploadImageMutation, useLogoutUserMutation } = authApi
+export const {useGetAdminsQuery,useRegisterAdminMutation,useLoginUserMutation, useGetUserProfileQuery, useUpdateUserMutation, useUploadImageMutation, useLogoutUserMutation } = authApi

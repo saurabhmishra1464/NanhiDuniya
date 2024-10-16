@@ -2,18 +2,13 @@ import React, { useState } from 'react';
 import Grid from '../common/grid/grid';
 import { ColumnDef, createColumnHelper } from '@tanstack/react-table';
 import { FaEllipsisV } from "react-icons/fa";
-type Person = {
-    id: string
-    Name: string
-    Email: string
-    PhoneNumber: string
-    Address: string
-    visits: number
-    status: string
-}
+import { useGetAdminsQuery } from '@/services/auth';
+import { Admins } from '@/model/Responses/AuthResponse';
+
 
 const AdminGrid = () => {
     const [openDropdown, setOpenDropdown] = useState(null);
+    const { data, isLoading, isError } = useGetAdminsQuery();
     const toggleDropdown = (id: any) => {
         setOpenDropdown(openDropdown === id ? null : id);
     };
@@ -28,174 +23,38 @@ const AdminGrid = () => {
         setOpenDropdown(null);
     };
 
-    const defaultData: Person[] = [
-        {
-            id: "1",
-            Name: 'tanner',
-            Email: 'linsley',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 100,
-            status: 'Enable',
-        },
-        {
-            id: "2",
-            Name: 'tandy',
-            Email: 'miller',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 40,
-            status: 'Disable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-        {
-            id: "3",
-            Name: 'joe',
-            Email: 'dirte',
-            PhoneNumber: "8825149794",
-            Address: "Muzaffarpur",
-            visits: 20,
-            status: 'Enable',
-        },
-    ]
 
-    const columns: ColumnDef<Person>[] = [
+
+    const columns: ColumnDef<Admins>[] = [
         {
             accessorKey: 'id',
-            header: '#',
-            cell: info => info.getValue(),
+            header: 'Id',
+            cell: ({ row }) => row.index + 1,
         },
         {
-            accessorKey: 'Name',
+            accessorKey: 'firstName', // Changed from 'Name' to 'firstName'
             header: 'Name',
             cell: info => info.getValue(),
         },
         {
-            accessorKey: 'Email',
+            accessorKey: 'email', // Changed from 'Email' to 'email'
             header: 'Email',
             cell: info => info.getValue(),
         },
         {
-            accessorKey: 'PhoneNumber',
-            header: 'PhoneNumber',
+            accessorKey: 'phoneNumber', // Changed from 'PhoneNumber' to 'phoneNumber'
+            header: 'Phone Number',
             cell: info => info.getValue(),
         },
         {
-            accessorKey: 'Address',
+            accessorKey: 'address', // Changed from 'Address' to 'address'
             header: 'Address',
             cell: info => info.getValue(),
         },
         {
             accessorKey: 'status',
             header: 'Account Status',
-            cell: info => info.getValue(),
+            cell: info => (info.getValue() ? 'Enabled' : 'Disabled'), // Assuming status is a boolean
         },
 
         {
@@ -238,9 +97,11 @@ const AdminGrid = () => {
             ),
         },
     ];
+    const admins: Admins[] = Array.isArray(data?.data) ? data.data : [];
+    console.log("adminlist", admins);
     return (
         <Grid
-            columns={columns} data={defaultData}
+            columns={columns} data={admins}
         />
     )
 }

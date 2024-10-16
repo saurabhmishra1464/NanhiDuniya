@@ -128,10 +128,10 @@ namespace NanhiDuniya.Services.AuthAPI.Service
 
             await publishEndpoint.Publish<SendEmailEvent>(new
             {
-                ToEmail = toEmailLoist,
-                From = "saurabhmishra1464@gmail.com",
-                Subject = "Confirm Email",
-                HtmlBody = htmlBody
+               ToEmail = toEmailLoist,
+               From = "saurabhmishra1464@gmail.com",
+               Subject = "Confirm Email",
+               HtmlBody = htmlBody
             });
             _logger.LogInformation("User registered successfully: {Email}", model.Email);
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "User Registered Succesfully");
@@ -267,6 +267,12 @@ namespace NanhiDuniya.Services.AuthAPI.Service
             });
 
             return ApiResponseHelper.CreateSuccessResponse<object>(null, "Email sent Succesfully");
+        }
+
+        public async Task<ApiResponse<IEnumerable<AdminDto>>> GetAdmins()
+        {
+            var admins = await _authRepository.GetAdmins();
+            return ApiResponseHelper.CreateSuccessResponse(admins, "UserProfile Fetched Successfully");
         }
         public async Task<ApiResponse<UserProfile>> GetUser()
         {

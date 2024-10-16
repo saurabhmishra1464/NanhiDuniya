@@ -12,5 +12,6 @@ namespace NanhiDuniya.Services.AuthAPI.Service.IService
         Task<ApiResponse<object>> SendConfirmationEmail(string email);
         Task<ApiResponse<UserProfile>> GetUser();
         Task<ApiResponse<UserProfile>> PutUserAsync(UserInfoDto userInfoDto);
+        Task<ApiResponse<IEnumerable<AdminDto>>> GetAdmins();
     }
 }

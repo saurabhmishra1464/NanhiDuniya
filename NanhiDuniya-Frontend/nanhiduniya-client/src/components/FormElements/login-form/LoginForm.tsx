@@ -29,10 +29,12 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loginError, setLoginError] = useState("");
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<z.infer<typeof LoginFormValidation>>({
+  const { register, handleSubmit, watch, formState: { errors },setValue } = useForm<z.infer<typeof LoginFormValidation>>({
     resolver: zodResolver(LoginFormValidation),
   });
   const password = watch('password');
+  const [username, setUsername] = useState("");
+  const [password1, setPassword] = useState("");
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -59,6 +61,28 @@ export default function SignIn() {
       toast.error(message || "Login failed!");
     }
   }
+  const handleRoleClick = (role:any) => {
+    switch (role) {
+      case "Admin":
+        setValue("userName", "saurabhmishra1464@gmail.com"); // Update to actual username
+        setValue("password", "@Sanu12345"); // Update to actual password
+        break;
+      case "Teacher":
+        setValue("userName", "teacher@example.com");
+        setValue("password", "teacher_password");
+        break;
+      case "Student":
+        setValue("userName", "student@example.com");
+        setValue("password", "student_password");
+        break;
+      case "Parent":
+        setValue("userName", "parent@example.com");
+        setValue("password", "parent_password");
+        break;
+      default:
+        break;
+    }
+  };
   return (
     <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark">
       <div className="flex flex-wrap items-center">
@@ -172,6 +196,7 @@ export default function SignIn() {
                   Forgot Password?
                 </Link>
               </div>
+
               <button
                 type="submit"
                 className="w-full cursor-pointer rounded-lg border border-primary bg-primary p-4 text-white transition hover:bg-opacity-90"
@@ -179,7 +204,7 @@ export default function SignIn() {
               >
                 {isLoading ? 'Logging In...' : 'Log In'}
               </button>
-              <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
+              {/* <button className="flex w-full items-center justify-center gap-3.5 rounded-lg border border-stroke bg-gray p-4 hover:bg-opacity-50 dark:border-strokedark dark:bg-meta-4 dark:hover:bg-opacity-50">
                 <span>
                   <svg
                     width="20"
@@ -214,8 +239,23 @@ export default function SignIn() {
                   </svg>
                 </span>
                 Login in with Google
-              </button>
-
+              </button> */}
+{/* Role Selection Section */}
+<div className="mt-8">
+                <h3 className="mb-4 text-lg font-semibold text-black dark:text-white">Login as -</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {['Admin', 'Teacher', 'Student', 'Parent'].map(role => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => handleRoleClick(role)}
+                      className="rounded-lg border border-stroke bg-gray-200 p-4 text-center text-black transition hover:bg-gray-300 dark:border-strokedark dark:bg-meta-4 dark:text-white"
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </div>
               {loginError && <LoginError message={loginError} />}
             </form>
           </div>

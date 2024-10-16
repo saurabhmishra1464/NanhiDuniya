@@ -7,6 +7,7 @@ type Props<T> = {
 };
 
 function Grid<T extends object>({ columns, data }: Props<T>) {
+  debugger
   const table = useReactTable({
     data: data ?? [],
     columns,

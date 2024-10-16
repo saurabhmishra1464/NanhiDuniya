@@ -84,7 +84,17 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
 });
 
 //Sql Server Setup
-builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+ if (builder.Environment.IsProduction())
+            {
+                Console.WriteLine("--> Using azure SqlServer Db");
+    builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("NanhiDuniyaAuthConn")));
+}
+else
+{
+    Console.WriteLine("--> local Db");
+    builder.Services.AddDbContext<NanhiDuniyaDbContext>(options => options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+}
+
 builder.Host.UseSerilog((ctx, lc) => lc.WriteTo.Console().ReadFrom.Configuration(ctx.Configuration));
 //initializing services.
 builder.Services.DataServiceCollection(builder.Configuration);
@@ -142,7 +152,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         builder => builder
-            .WithOrigins("https://localhost:7777")  // Allow requests from frontend
+            .WithOrigins("https://localhost:7777","http://nanhiduniya.com","https://nanhiduniyafrontend.saurabhmishra.com")  // Allow requests from frontend
             .AllowAnyHeader()                     // Allow headers like Authorization
             .AllowAnyMethod()                     // Allow GET, POST, PUT, etc.
             .AllowCredentials());                 // Allow cookies (if needed)
@@ -153,15 +163,16 @@ builder.Services.Configure<NanhiDuniyaServicesSettings>(configuration.GetSection
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Nanhi Duniya User Management API V1");
+    options.RoutePrefix = string.Empty; // This will serve the Swagger UI at the root URL
+});
+app.MapGet("/", () => Results.Redirect("/index.html"));
 app.UseSerilogRequestLogging();
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection(); // commented it for k8s
 app.UseCors("AllowFrontend");
 app.UseCookiePolicy();
 app.UseAuthentication();
@@ -169,6 +180,23 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
+// Apply migrations
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<NanhiDuniyaDbContext>();
+    if (app.Environment.IsProduction())
+    {
+        Console.WriteLine("--> Attempting to apply migrations...");
+        try
+        {
+            context.Database.Migrate();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"--> Could not run migrations: {ex.Message}");
+           
+        }
+    }
+}
 app.Run();
 

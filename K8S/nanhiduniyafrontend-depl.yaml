@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanhiduniyafrontend-depl
+spec:
+  replicas: 1  # Adjust based on your needs
+  selector:
+    matchLabels:
+      app: nanhiduniyafrontend  # Use a meaningful label
+  template:
+    metadata:
+      labels:
+        app: nanhiduniyafrontend
+    spec:
+      containers:
+        - name: nanhiduniyafrontend
+          image: saurabh1464/nanhiduniyafrontendaservice:latest
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanhiduniyafrontend-clusterip-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: nanhiduniyafrontend
+  ports:
+  - name: nanhiduniyafrontend
+    protocol: TCP
+    port: 3000
+    targetPort: 3000  # Unique NodePort for external access
